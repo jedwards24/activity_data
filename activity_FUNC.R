@@ -4,7 +4,7 @@
 ##################
 get_week_gaps <- function(log, max_week=7){
   nn <- dim(log)[1]
-  diff <- as.numeric(c(log$Date[2 : nn], lubridate::today(tzone="UTC")) - log$Date)
+  diff <- as.numeric(c(log$date[2 : nn], lubridate::today(tzone="UTC")) - log$date)
   return(pmin(diff, max_week))
 }
 
@@ -16,8 +16,8 @@ get_week_gaps <- function(log, max_week=7){
 # New week data is recombined with non-week data and sorted by date.
 ################
 split_week_data <- function(log, max_week=7){
-  log_non_week <- log %>% filter(Week_total==0)
-  log <- log %>% filter(Week_total==1)
+  log_non_week <- log %>% filter(week_total==0)
+  log <- log %>% filter(week_total==1)
   gaps <- get_week_gaps(log, max_week)
   nn <- dim(log)[1]
   locs <- c(1, cumsum(gaps) + 1)
@@ -28,7 +28,7 @@ split_week_data <- function(log, max_week=7){
         c(1, log[i, 2] + j - 1, log[i, 3:4], log[i, c(5:7, 9)] / gaps[i])
     }
   }
-  return(bind_rows(log_non_week, week_df) %>% arrange(Date) %>% rename(Week_data=Week_total))
+  return(bind_rows(log_non_week, week_df) %>% arrange(date) %>% rename(week_data=week_total))
 }
 
 ###################
@@ -42,17 +42,17 @@ move_ave <- function(x,n=7){
 
 ##################
 # Find an Eddington type number. An Eddington number is the number n of rides >=n activities with >=n miles.
-# This function is more flexible allowing diffent activity types (argument type is R, B or F) and other
+# This function is more flexible allowing diffent activity types (argument activity_type is "R", "B" or "F") and other
 # measures and units. Give variable for the measure in the "measure" argument and "unit_adjust" to divide
 # the measure by.
 # By default all dates are included but a integer of vector "years" can be used to filter.
 # The number of activities above each integer is returned together with the Eddington number.
 ##################
-eddington <- function(data, type, measure = "Distance", unit_adjust = 1, years = NA) {
+eddington <- function(data, activity_type, measure = "Distance", unit_adjust = 1, years = NA) {
   if (!any(is.na(years))){
     data <- filter(data, lubridate::year(Date) %in% years)
   }
-  vals <- data %>% filter(Type == type) %>% 
+  vals <- data %>% filter(type == activity_type) %>% 
     select_at(measure) %>% 
     mutate_all(~./unit_adjust) %>% 
     unlist(., use.names = F) 
@@ -67,26 +67,26 @@ eddington <- function(data, type, measure = "Distance", unit_adjust = 1, years =
 }
 
 ################
-# Returns a tibble of the `n activities of `type` with the largest "measure" 
+# Returns a tibble of the `n activities of `activity_type` with the largest "measure" 
 # (e.g. 5 runs/cycles with most ascent/distance/time). 
 ################
-mostest <- function(data, type, measure, n = 15) {
+mostest <- function(data, activity_type, measure, n = 15) {
   data %>% 
-    filter(Type == type) %>%
-    filter(Week_data == 0) %>%
-    select(-Week_data) %>% 
+    filter(type == activity_type) %>%
+    filter(week_data == 0) %>%
+    select(-week_data) %>% 
     top_n(n = n, wt = get(measure)) %>% 
-    arrange(Type, desc(get(measure)))
+    arrange(type, desc(get(measure)))
 }
 
 #################
 # Returns tibble, counts by year, of activities of `type` that have `measure` >= `threshold`.
 #################
-n_over <- function(data, type, measure, threshold) {
+n_over <- function(data, activity_type, measure, threshold) {
   data %>% 
-    filter(Type == type) %>%
-    filter(Week_data == 0) %>%
-    select(-Week_data) %>% 
+    filter(type == activity_type) %>%
+    filter(week_data == 0) %>%
+    select(-week_data) %>% 
     filter(get(measure) >= threshold) %>% 
     group_by(year = lubridate::year(Date)) %>%
     count()
