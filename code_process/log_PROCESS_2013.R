@@ -10,10 +10,7 @@ file_name <- "C:/Users/James/Dropbox/Mine/Personal/Activity Record.xlsx"
 
 source("activity_FUNC.R")
 
-excel_sheets(file_name)
 dt <- read_excel(file_name, sheet="Log", skip=12)
-glimpse(dt)
-var_summary(dt)
 
 #trim rows with no entry and remove blank column
 log <- dt %>% 
@@ -21,17 +18,13 @@ log <- dt %>%
   select(-c(`...16`))
 
 #Rename cols
-colnames(log)
 colnames(log) <- c("Week_total", "Date", "Type", "Subtype", "Time", "Distance", "Ascent", "Notes", "Terrain", 
                    "Tempo_pace", "5k10k_pace", "Sub_5k_pace", "Hill_sprints", "Strides", "Drills", 
                    "Total_time", "Year", "Month", "Week")
 
-#glimpse(log)
 log <- mutate(log, Date = as.Date(Date)) #change Date to date object (from datetime)
 
-# List number of NAs and replace
-count_nas(log)
-var_summary(log)
+# rename and replace NAs
 
 log <- log %>%
   rename_all(str_to_lower) %>% 
@@ -50,8 +43,8 @@ log_B <- log %>% filter(type=="B") %>%
 log_F <- log %>% filter(type=="F") %>%
   select(c(1:9, 16))
 
-#Split week totals (loses terrain)
-#Note 5 day week for cycling
+# Split week totals (loses terrain)
+# Note 5 day week for cycling
 # NAs created in Notes column by split_week_data function
 log_B_split <- log_B %>% 
   split_week_data(max_week=5) %>%
@@ -107,13 +100,13 @@ totals <- totals %>%
 
 # save
 if(F){
-  saveRDS(dt, "data_processed/log_master.RDS")
-  saveRDS(log, "data_processed/log_clean.RDS")
-  saveRDS(log_B, "data_processed/log_B.RDS")
-  saveRDS(log_R, "data_processed/log_R.RDS")
-  saveRDS(log_F, "data_processed/log_F.RDS")
-  saveRDS(log_new, "data_processed/log_new.RDS")
-  saveRDS(totals, "data_processed/log_totals.RDS")
+  saveRDS(dt, "data_processed/log_2013_raw.RDS")
+  saveRDS(log, "data_processed/log_2013_clean.RDS")
+  # saveRDS(log_B, "data_processed/log_2013_B.RDS")
+  # saveRDS(log_R, "data_processed/log_2013_R.RDS")
+  # saveRDS(log_F, "data_processed/log_2013_F.RDS")
+  saveRDS(log_new, "data_processed/log_2013.RDS")
+  saveRDS(totals, "data_processed/log_2013_totals.RDS")
 }
 
 #checks
