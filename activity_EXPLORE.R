@@ -30,13 +30,6 @@ names(log_R)
 names(log_new)
 log_new %>% group_by(type, week_data) %>% tally(distance)
 
-shoe_summary <- log_all %>% 
-  filter(type == "R") %>% 
-  group_by(subtype) %>%
-  summarise_at(.vars = c("time", "distance", "ascent"), sum) %>%
-  arrange(desc(distance))
-shoe_summary
-
 #Annual volume
 volume <- log_all %>% 
   filter(type %in% c("R", "B")) %>%
