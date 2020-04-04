@@ -5,19 +5,7 @@ library(tidyverse)
 library(lubridate)
 source("activity_FUNC.R")
 
-log18 <- readRDS("data_processed/log_2018.RDS")
-log13 <- readRDS("data_processed/log_2013.RDS")
-
-# Combine dfs. The older df uses "notes" for the activity name
-log18_simp <- log18 %>% 
-  select_at(c(names(log13)[-1], "description")) %>%
-  select(-notes) %>% 
-  rename(notes = description)
-
-log_all <- mutate(log18_simp, week_data = 0) %>%  
-  bind_rows(log13) %>% 
-  mutate(week_data = as.logical(week_data)) %>% 
-  rename(name = notes)
+log_all <- readRDS("data_processed/log_all.RDS")
 
 count(log_all, week_data)
 # names(log_all) <- str_to_lower(names(log_all))
@@ -30,26 +18,40 @@ names(log_R)
 names(log_new)
 log_new %>% group_by(type, week_data) %>% tally(distance)
 
+# 2020 month
+log_all %>% 
+  filter(type %in% c("R", "B")) %>%
+  filter(year(date) == 2020) %>% 
+  group_by(type, month = factor(month(date), ordered = TRUE)) %>%
+  summarise(distance = sum(distance),
+            time = sum(time),
+            ascent = sum(ascent),
+            freq = n())
+
 #Annual volume
 volume <- log_all %>% 
   filter(type %in% c("R", "B")) %>%
   filter(year(date) <= 2019, year(date) > 2013) %>% 
   group_by(type, year = as.factor(year(date))) %>%
   summarise(distance = sum(distance),
-            time = sum(time),
+            time = sum(time) / 60,
             ascent = sum(ascent),
             freq = n())
 
+volume %>% 
+  group_by(year) %>% 
+  summarise_if(is.numeric, sum)
+
 ggplot(volume, aes(x = year, y = distance, fill = type)) +
   geom_col(position = "dodge")
-ggplot(volume, aes(x = year, y = time / 60 / 52, fill = type)) +
+ggplot(volume, aes(x = year, y = time / 52, fill = type)) +
   geom_col(position = "dodge") +
   ylab("weekly hours")
 ggplot(volume, aes(x = year, y = ascent, fill = type)) +
   geom_col(position = "dodge")
 ggplot(volume, aes(x = year, y = freq, fill = type)) +
   geom_col(position = "dodge")
-ggplot(volume, aes(x = year, y = time / 60 / 52, fill = type)) +
+ggplot(volume, aes(x = year, y = time / 52, fill = type)) +
   geom_col() +
   ylab("weekly hours")
 
@@ -121,3 +123,29 @@ plot(tail(temp$temp, 730), typ='l')
 count(workouts, type)
 count(workouts, quality)
 
+# 2020 -----------
+dt20 <- readRDS("data_processed/log_2020.RDS") 
+var_summary(dt20)
+dt20 %>% 
+  filter(type == "B") %>% 
+  group_by(month(date)) %>% 
+  summarise(n = n(), km = sum(distance), climb = sum(ascent), time = sum(time))
+
+rides <- dt20 %>% 
+  filter(type == "B") %>% 
+  mutate(days_ago = (today() - date) %>% as.numeric(., units = "days")) %>% 
+  select(days_ago, time, distance, ascent, norm_power, description) %>% 
+  arrange(days_ago)
+rides
+rides %>% 
+  ggplot(aes(x = days_ago, y = distance, size = ascent)) +
+  geom_point()
+
+rides %>% 
+  ggplot(aes(x = days_ago, y = distance, fill = ascent)) +
+  geom_col() +
+  scale_fill_gradient2()
+
+rides %>% 
+  ggplot(aes(size = sqrt(1 / days_ago), x = distance, y = ascent)) +
+  geom_point()

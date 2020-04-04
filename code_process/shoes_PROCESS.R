@@ -3,26 +3,7 @@
 library(tidyverse)
 library(lubridate)
 
-log20 <- readRDS("data_processed/log_2020.RDS")
-log18 <- readRDS("data_processed/log_2018.RDS")
-log13 <- readRDS("data_processed/log_2013.RDS")
-
-# Combine dfs. The older df uses "notes" for the activity name
-log18_simp <- log18 %>% 
-  select_at(c(names(log13)[-1], "description")) %>%
-  select(-notes) %>% 
-  rename(notes = description)
-
-log20_simp <- log20 %>% 
-  select_at(c(names(log13)[-1], "description")) %>%
-  select(-notes) %>% 
-  rename(notes = description)
-
-log_all <- bind_rows(log13,
-                     mutate(log18_simp, week_data = 0),
-                     mutate(log20_simp, week_data = 0)) %>%
-  mutate(week_data = as.logical(week_data)) %>% 
-  rename(name = notes)
+log_all <- readRDS("data_processed/log_all.RDS")
 
 # shoes ------------
 shoe13 <- read_csv("data/shoes.csv", col_types = "icdl")
@@ -45,7 +26,7 @@ shoes <- log_all %>%
   group_by(year, type, subtype) %>%
   summarise_at(.vars = c("time", "distance", "ascent"), sum) %>% 
   rename(id = subtype) %>% 
-  mutate(id = na_if(id, "none")) %>%   
+  mutate(id = na_if(id, "(none)")) %>%
   mutate(id = as.integer(id)) %>% 
   full_join(shoe_names, by = "id") %>% 
   bind_rows(df13) %>% 
@@ -77,3 +58,12 @@ shoes %>%
   group_by(id) %>% 
   summarise(distance = sum(distance), name = unique(name)) %>% 
   arrange(desc(distance))
+
+#2020
+shoes %>% 
+  filter(year == 2020) %>% 
+  filter(type == "R") %>% 
+  group_by(id) %>% 
+  summarise(distance = sum(distance), name = unique(name)) %>% 
+  arrange(desc(distance))
+  
