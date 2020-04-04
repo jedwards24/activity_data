@@ -1,0 +1,51 @@
+---
+title: "Activity Record Analysis Notes"
+output: html_document
+---
+
+```{r setup, include = FALSE}
+knitr::opts_chunk$set(echo = F, message = F, error = F, cache = F)
+library(tidyverse)
+library(edwards)
+library(knitr)
+library(kableExtra)
+```
+The purpose of this project is to load, process, and do analyses on my activity record data.
+
+## Raw Data Overview
+
+The data is in several spreadsheets, split by year. The first spreadsheet "Activity record.xlsx" goes from mid 2013 to the end of 2017, "Activity record 2018.xlsx" contains 2018 and 2019 data, and "Activity record 2020.xlsx" is currently in use. Over the years I have changed what I record so the data from one spreadsheet might not be fully compatible with the others.
+
+There are a number of sheets in each file. Some of these are copied over from one to the next and so only the latest one is needed, while others are started fresh with each new spreadsheet. There are also summary sheets which are not data themselves but display data from other sheets. I will not list or use these. The data sheets of possible interest are (redundant versions aren't listed):
+
++ *Log*. In all spreadsheets but called "2018" and "2020" in the later versions. Contains the main data. Each row is an activity.
++ *Stress&Health*. In all spreadsheets. Started in 2017-05-07. Each row is a day. Some columns were recorded in the TL sheets before this.
++ *Sleep*. In 2013 and 2018 spreadsheets. Daily sleep data.
++ *SAM*. The 2018 and 2020 versions are very different. The older record gives counts of activities per month from 11/2016 to 04/2018. The new one has a row for each activity.
++ *Weight*. In 2020. An irregular record of my weight. Started in 02/2018.
++ *Races*. In 2020. Basic stats about all races I have done.
+
+Other sheets that I am unlikely to import are *Records* (2020), *Perform* (2018), *TL new* (2013), *TL old* (2013), and *Stresses* (2013).
+
+## Raw Data Import and Processing
+
+So far I have just imported and processed the *Log* sheets. The code for this is found at `code_process/log_PROCESS_20xx.R` with one file for each spreadsheet. Although some of the columns are consistent across spreadsheets, others do change.
+
+In all sheets I removed blank rows and columns, renamed columns, and replaced missing values where appropriate. In the 2013 log I had some rows that recorded weekly totals for some repetitive activities i.e. shorter walks and standard cycle commutes. So these aren't seen as large single activities I split this data across the week for walking and across Mon-Fri for cycling. This is perfect but it is better than leaving it as it is. I added a `week_data` column to indicate which rows came from week totals (`TRUE` for split week totals and `FALSE` for daily activities).
+
+I did the 2013 log processing a while ago. I would probably do some things differently now but I am not going to rewrite it. It produces the following files:
+
++ `log_2013_raw.RDS` is the first read from the excel sheet.
++ `log_2013_clean.RDS` is the data with basic processing but without splitting week totals.
++ `log_2013.RDS` is the fully processed data with weekly totals split. Some run-specific columns have been removed: `terrain`, `tempo_pace`, `5k10k_pace`, `sub_5k_pace`, `hill_sprints`, `strides`, and `drills`. There are no running weekly totals so, if these columns are needed, they can be obtained from `log_2013_clean.RDS`. Although there is a  `strides` column in later logs, it is a different count so I wouldn't want to combine these.
++ `log_2013_totals.RDS` has daily totals for each activity type for a few of the columns (see below for details).
+
+The 2018 and 2020 logs are simpler to process and have the same output files except for no `...clean.RDS`. Each file is saved to the `data_processed` folder.
+
+Each of the `...totals.RDS` files has the same structure and in `code_process/log_MERGE.R` they are combined to a single file then saved as `data_processed/totals.RDS`. The log activity files have also been combined and saved as `data_processed/log_all.RDS` but only columns common to each dataset are kept.  
+
+## Log Data Structure
+
+The `totals` data frame has five columns: `type`, `date`, `time`, `distance`, and `ascent`. The `type` is either "R", "B", or "F" (run, bike, foot) and there is one row for each `date` and `type`. I have excluded other activity types from these summaries for now since they are rare, but this will need sorting at some point. The last three columns are total time in minutes, distance in km, and ascent in metres for that activity type, for that day. There is always an entry for each type on each day (zero if no activity took place), up to the date on which the latest data was processed. 
+
+The `log_all.RDS` dataframe has the following columns: `date`, `type`, `subtype`, `time`, `distance`, `ascent`, `name`, `total_time`, and `week_data`. The column `week_data` is `FALSE` for all activities outside the 2013 datasheet.
