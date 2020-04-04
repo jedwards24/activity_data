@@ -6,6 +6,7 @@
 library(tidyverse)
 library(readxl)
 library(edwards)
+library(lubridate)
 file_name <- "C:/Users/James/Dropbox/Mine/Personal/Activity Record.xlsx"
 
 source("activity_FUNC.R")
@@ -31,8 +32,8 @@ log <- log %>%
   mutate(total_time = ifelse(is.na(total_time), time, total_time)) %>% 
   mutate_if(is.numeric, ~replace_na(., 0)) %>% 
   replace_na(list(week_total = 0, 
-                  subtype = "none",
-                  notes = "none")) %>%
+                  subtype = "(none)",
+                  notes = "(none)")) %>%
   mutate(week_total = ifelse(week_total == "week", 1, 0))  # Convert week total to binary 
 
 #New dfs separated by activity type (loses day, week, month columns)
@@ -43,28 +44,31 @@ log_B <- log %>% filter(type=="B") %>%
 log_F <- log %>% filter(type=="F") %>%
   select(c(1:9, 16))
 
+
 # Split week totals (loses terrain)
 # Note 5 day week for cycling
 # NAs created in Notes column by split_week_data function
 log_B_split <- log_B %>% 
   split_week_data(max_week=5) %>%
-  mutate(notes = replace_na(notes, "none"))
+  mutate(notes = replace_na(notes, "(none)")) %>% 
+  filter(distance != 0)
 
 log_F_split <- log_F %>% 
   select(-terrain) %>%
   split_week_data(max_week=7) %>%
-  mutate(notes = replace_na(notes, "none"))
+  mutate(notes = replace_na(notes, "(none)")) %>% 
+  filter(distance != 0)
 
 #Checks
 if (F){
   log_B_split %>% summarise_if(is.numeric, sum)
   log_B %>% summarise_if(is.numeric, sum)
-  
+
   log_F_split %>% summarise_if(is.numeric, sum)
   log_F %>% summarise_if(is.numeric, sum)
   
   count_nas(log_F_split)
-  count_matches(log_F_split, "none")
+  count_matches(log_F_split, "(none)")
 }
 
 #Combine R,B,F into single df
@@ -75,36 +79,23 @@ log_new <- log_R %>%
   bind_rows(log_F_split) %>% 
   arrange(date)
 
-#Create temp df with zero entries for all days and types
-start <- min(log_new$date)
-ndays <- as.numeric(max(log_new$date) - start) + 1
-nn <- 3 * ndays
-temp_df <- tibble(date = rep(start + (1 : ndays) - 1, 3),
-                  type = rep(c("B", "F", "R"), each=ndays),
-                  time = 0,
-                  distance = 0,
-                  ascent = 0)
-
-# Create new df with daily totals for each activity type (uses temp_df to add zero 
-# entries on days where there is no activity for a given type)
+# Create new df with daily totals for each activity type (B, R, F) with  
+# entries for all dates and types even if there was no activity of that type on that day.
 totals <- log_new %>% 
+  filter(type %in% c("B", "R", "F")) %>% 
   select(c(2:3, 5:7)) %>%
-  bind_rows(temp_df) %>%
-  group_by(type, date) %>% 
-  summarise_all(sum)
-
-totals <- totals %>% 
+  group_by(date, type) %>% 
+  summarise_all(sum) %>%
   ungroup() %>% 
-  mutate(day=as.numeric(date - min(date) + 1)) %>%
-  arrange(date)
+  arrange(date) %>%
+  complete(date = seq.Date(ymd("2013-07-01"), ymd("2017-12-31"), by = "days"),
+           type = c("B", "F", "R"),
+           fill = list(time = 0, distance = 0, ascent = 0))
 
 # save
-if(F){
+if(save_flag){
   saveRDS(dt, "data_processed/log_2013_raw.RDS")
   saveRDS(log, "data_processed/log_2013_clean.RDS")
-  # saveRDS(log_B, "data_processed/log_2013_B.RDS")
-  # saveRDS(log_R, "data_processed/log_2013_R.RDS")
-  # saveRDS(log_F, "data_processed/log_2013_F.RDS")
   saveRDS(log_new, "data_processed/log_2013.RDS")
   saveRDS(totals, "data_processed/log_2013_totals.RDS")
 }

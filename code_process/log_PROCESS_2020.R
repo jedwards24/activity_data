@@ -6,6 +6,7 @@
 library(tidyverse)
 library(readxl)
 library(edwards)
+library(lubridate)
 
 file_name <- "C:/Users/James/Dropbox/Mine/Personal/Activity Record 2020.xlsx"
 
@@ -25,32 +26,25 @@ log <- mutate(log, Date=as.Date(Date)) #change Date to date object (from datetim
 log_2020 <- log %>%
   mutate(Total_time = ifelse(is.na(Total_time), Time, Total_time)) %>%
   mutate_if(is.numeric, ~replace_na(., 0)) %>%
-  replace_na(list(Subtype = "none")) %>% 
+  replace_na(list(Subtype = "(none)")) %>% 
   rename_all(str_to_lower)
 
-# Left NAs in Description,  Quality_types, Notes
+# Have left NAs in Description,  Quality_types, Notes
 
-# Create new df with daily totals for each activity type (uses temp_df to add zero 
-# entries on days where there is no activity for a given type)
-# Uses temp df with zero entries for all days and types
-start <- min(log_2020$date)
-ndays <- as.numeric(max(log_2020$date) - start) + 1
-temp_df <- tibble(date = rep(start + (1 : ndays) - 1, 3), 
-                  type = rep(c("B", "F", "R"), 1, each=ndays),
-                  time = 0,
-                  distance = 0,
-                  ascent = 0)
-
+# Create new df with daily totals for each activity type (B, R, F) with  
+# entries for all dates and types even if there was no activity of that type on that day.
 totals_2020 <- log_2020 %>% 
+  filter(type %in% c("B", "R", "F")) %>% 
   select(c(1:2, 4:6)) %>%
-  bind_rows(temp_df) %>% 
-  group_by(type, date) %>% 
+  group_by(date, type) %>% 
   summarise_all(sum) %>%
   ungroup() %>% 
-  mutate(day=as.numeric(date - min(date) + 1)) %>%
-  arrange(date)
+  arrange(date) %>%
+  complete(date = seq.Date(ymd("2020-01-01"), today(), by = "days"),
+           type = c("B", "F", "R"),
+           fill = list(time = 0, distance = 0, ascent = 0))
 
-if(F){
+if(save_flag){
   saveRDS(log_master, "data_processed/log_2020_raw.RDS")
   saveRDS(log_2020, "data_processed/log_2020.RDS")
   saveRDS(totals_2020, "data_processed/log_2020_totals.RDS")
