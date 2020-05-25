@@ -9,7 +9,7 @@ t20 <- readRDS("data_processed/log_2020_totals.RDS")
 
 tot <- bind_rows(t13, t18, t20)
 
-if (F){
+if (save_flag){
   saveRDS(tot, "data_processed/totals.RDS")
 }
 
@@ -36,7 +36,7 @@ log_all <-
   rename(name = notes) %>% 
   select( c(2:9, 1))
 
-if (F){
+if (save_flag){
   saveRDS(log_all, "data_processed/log_all.RDS")
 }
 

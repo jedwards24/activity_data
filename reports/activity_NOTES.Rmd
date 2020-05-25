@@ -37,7 +37,7 @@ I did the 2013 log processing a while ago. I would probably do some things diffe
 
 + `log_2013_raw.RDS` is the first read from the excel sheet.
 + `log_2013_clean.RDS` is the data with basic processing but without splitting week totals.
-+ `log_2013.RDS` is the fully processed data with weekly totals split. Some run-specific columns have been removed: `terrain`, `tempo_pace`, `5k10k_pace`, `sub_5k_pace`, `hill_sprints`, `strides`, and `drills`. There are no running weekly totals so, if these columns are needed, they can be obtained from `log_2013_clean.RDS`. Although there is a  `strides` column in later logs, it is a different count so I wouldn't want to combine these.
++ `log_2013.RDS` is the fully processed data with weekly totals split. Some run-specific columns have been removed: `terrain`, `tempo_pace`, `5k10k_pace`, `sub_5k_pace`, `hill_sprints`, `strides`, and `drills`. There are no running weekly totals so, if these columns are needed, they can be obtained from `log_2013_clean.RDS`. There is a `strides` column in this and in later logs, but they do not measure exactly the same thingg, so I wouldn't want to combine these.
 + `log_2013_totals.RDS` has daily totals for each activity type for a few of the columns (see below for details).
 
 The 2018 and 2020 logs are simpler to process and have the same output files except for no `...clean.RDS`. Each file is saved to the `data_processed` folder.

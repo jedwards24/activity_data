@@ -8,7 +8,9 @@ library(lubridate)
 process_folder <- "code_process"
 save_flag <- TRUE
 
-source(file.path(process_folder, "log_PROCESS_2013.R"))
-source(file.path(process_folder, "log_PROCESS_2018.R"))
+if (F){
+  source(file.path(process_folder, "log_PROCESS_2013.R"))
+  source(file.path(process_folder, "log_PROCESS_2018.R"))
+}
 source(file.path(process_folder, "log_PROCESS_2020.R"))
 source(file.path(process_folder, "log_MERGE.R"))
