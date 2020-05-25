@@ -88,7 +88,7 @@ n_over <- function(data, activity_type, measure, threshold) {
     filter(week_data == 0) %>%
     select(-week_data) %>% 
     filter(get(measure) >= threshold) %>% 
-    group_by(year = lubridate::year(Date)) %>%
+    group_by(year = lubridate::year(date)) %>%
     count()
 }
 

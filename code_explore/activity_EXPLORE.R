@@ -3,6 +3,9 @@
 ############
 library(tidyverse)
 library(lubridate)
+library(reactable)
+library(plotly)
+library(edwards)
 source("activity_FUNC.R")
 
 log_all <- readRDS("data_processed/log_all.RDS")
@@ -55,6 +58,37 @@ ggplot(volume, aes(x = year, y = time / 52, fill = type)) +
   geom_col() +
   ylab("weekly hours")
 
+# Weekly volume ------------
+week_ave <- log_all %>% 
+  filter(type %in% c("R", "B")) %>%
+  filter(year(date) > 2013) %>%
+  group_by(year = as.factor(year(date))) %>%
+  mutate(n_weeks = yday(max(date)) / 7) %>% 
+  group_by(type, year) %>%
+  summarise(n_weeks = max(n_weeks),
+            distance = sum(distance) / n_weeks,
+            time = sum(time) / 60 / n_weeks,
+            ascent = sum(ascent) / n_weeks,
+            freq = n() / n_weeks)
+week_ave %>% 
+  ggplot(aes(x = year, y = time, fill = type)) +
+  geom_col(position = "dodge")
+week_ave %>%
+  ggplot(aes(x = year, y = distance, fill = type)) +
+  geom_col(position = "dodge")
+week_ave %>%
+  ggplot(aes(x = year, y = ascent, fill = type)) +
+  geom_col(position = "dodge")
+
+# bike volume ----------
+log_all %>%
+  filter(type == "B") %>% 
+  group_by(subtype) %>% 
+  summarise(n = n(), km = sum(distance))
+  
+log_all %>%
+  filter(type == "B", subtype == "(none)") 
+    
 # Rides in 2016/17/18 ---------------
 log_all %>% 
   mutate(year = year(date)) %>% 
@@ -66,6 +100,47 @@ log_all %>%
   top_n(n = 5, wt = distance) %>%
   arrange(year, desc(distance))
 
+# Rides by distance/pace etc ------------
+db <- log_all %>% 
+  mutate(year = year(date)) %>% 
+  filter(type == "B",
+         week_data == 0,
+         year %in% c(2013:2020)) %>%
+  select(-week_data) %>% 
+  mutate(kph_moving = distance / time * 60) %>% 
+  mutate(kph_all = distance / total_time * 60) %>%
+  mutate(ascent_pc = ascent / distance / 10) %>% 
+  mutate(year = factor(year, ordered = T)) %>% 
+  mutate_if(is.numeric, ~round(., 1))
+  
+db %>% 
+  filter(distance >= 40) %>% 
+  arrange(desc(kph_moving))
+
+db %>% 
+  reactable(filterable = T)
+gg1 <- db %>% 
+  filter(distance >= 60) %>% 
+  ggplot(aes(kph_moving, kph_all, colour = year, size = distance, text = name)) +
+  geom_point()
+
+gg2 <- db %>% 
+  filter(distance >= 60) %>% 
+  ggplot(aes(distance, kph_all, colour = year, size = ascent_pc, text = name)) +
+  geom_point() 
+
+gg3 <- db %>% 
+  filter(distance >= 60) %>% 
+  ggplot(aes(distance, kph_moving, colour = year, size = ascent_pc, text = name)) +
+  geom_point() 
+
+ggplotly(gg1, tooltip = c("text", "ascent_pc"))
+ggplotly(gg2, tooltip = c("text", "ascent_pc"))
+ggplotly(gg3, tooltip = c("text", "ascent_pc"))
+
+db %>% 
+  filter(distance >= 50) %>% 
+  plot_ly(x = ~distance, y = ~kph_all, colour = ~year, size = ~ascent_pc)
 
 # Five longest (distance) R, B and F activities --------------
 log_all %>% filter(type %in% c("R", "B", "F")) %>%
@@ -96,7 +171,7 @@ log_all %>% filter(type == "R") %>%
 mostest(log_all, "R", "time")
 
 n_over(log_all, "B", "distance", 60)
-n_over(log_all, "B", "time", 120)
+n_over(log_all, "B", "time", 90)
 n_over(log_all, "R", "ascent", 500)
 n_over(log_all, "B", "ascent", 500)
 
@@ -113,13 +188,6 @@ eddington(totals, "R", years = 2017)
 eddington(log_new, "B", "ascent", 20)
 eddington(totals, "R")
 
-
-library(zoo)
-library(tidyverse)
-temp <- totals %>% filter(type=="R") %>% transmute(temp=rollsum(distance, 28, alig="right", fill=NA))
-plot(temp$temp, typ='l')
-plot(tail(temp$temp, 730), typ='l')
-
 count(workouts, type)
 count(workouts, quality)
 
@@ -128,7 +196,7 @@ dt20 <- readRDS("data_processed/log_2020.RDS")
 var_summary(dt20)
 dt20 %>% 
   filter(type == "B") %>% 
-  group_by(month(date)) %>% 
+  group_by(month = month(date)) %>% 
   summarise(n = n(), km = sum(distance), climb = sum(ascent), time = sum(time))
 
 rides <- dt20 %>% 
@@ -149,3 +217,51 @@ rides %>%
 rides %>% 
   ggplot(aes(size = sqrt(1 / days_ago), x = distance, y = ascent)) +
   geom_point()
+
+# Strava-style training log ------------
+tl <- log_all %>% filter(type %in% c("R", "B", "F")) %>% 
+  filter(year(date) == 2020) %>% 
+  mutate(weeks_ago = isoweek(today()) - isoweek(date),
+         wday = wday(date, label = TRUE)) %>% 
+  filter(weeks_ago <= 4) %>%
+  group_by(date) %>% 
+  mutate(act_ind = row_number(time),
+         n_acts = n(),
+         pos = act_ind / (n_acts + 1) - 0.5) %>% 
+  arrange(weeks_ago)
+tl
+isoweek(tl$date[1])
+(1:3) / 4
+tl %>% 
+  filter(any(act_ind > 1))
+tl %>% 
+  ggplot(aes(x = wday, y = weeks_ago + pos, size = distance, colour = type)) +
+  geom_point() + 
+  scale_size(range = c(10, 30)) +
+  ylab("Weeks Ago") +
+  xlab("Weekday") +
+  ylim(c(NA, 4.5)) +
+  guides(size = FALSE) +
+  theme_classic()
+
+# recent weeks --------
+ww <- log_all %>% filter(type %in% c("R", "B", "F")) %>% 
+  filter(year(date) == 2020) %>% 
+  mutate(week = isoweek(date)) %>% 
+  mutate(weeks_ago = isoweek(today()) - week) %>% 
+#  filter(weeks_ago <= 4) %>%
+  group_by(week, type) %>% 
+  summarise(n = n(),
+            dist = sum(distance),
+            ascent = sum(ascent), 
+            time = sum(time) / 60)
+
+ww %>% 
+  filter(type != "F") %>% 
+  ggplot(aes(week, time, fill = type)) +
+  geom_col()
+
+ww %>%  
+  ggplot(aes(week, time, group = type, colour = type)) +
+  geom_line() +
+  ylim(c(0, NA))
