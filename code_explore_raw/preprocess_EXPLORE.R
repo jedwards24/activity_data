@@ -6,6 +6,7 @@
 library(tidyverse)
 library(readxl)
 library(edwards)
+library(lubridate)
 source("activity_FUNC.R")
 
 # Data sheets
@@ -26,6 +27,9 @@ file_name2 <- "C:/Users/James/Dropbox/Mine/Personal/Activity Record 2018.xlsx"
 
 excel_sheets(file_name2)
 
+file_name3 <- "C:/Users/James/Dropbox/Mine/Personal/Activity Record 2020.xlsx"
+
+
 # stress& health -------------
 dt <- read_excel(file_name2, sheet = "Stress&Health", skip = 2)
 var_summary(dt2)
@@ -36,6 +40,38 @@ dt2 <- dt %>%
   rename_all(str_squish) %>% 
   rename_all(~str_replace_all(., " ", "_")) %>% 
   rename_all(str_to_lower)
+
+# 2020
+dt <- read_excel(file_name3, sheet = "Stress&Health", skip = 2)
+var_summary(dt)
+dt %>% select(15:17) %>% distinct() %>% prinf
+dt2 <- dt %>%
+  select(1:14) %>% 
+  rename_all(~str_remove_all(., "[\\d-()&]")) %>%
+  rename_all(str_squish) %>% 
+  rename_all(~str_replace_all(., " ", "_")) %>% 
+  rename_all(str_to_lower) %>% 
+  filter(!is.na(energy) & !is.na(mood)) %>% 
+  mutate(date = as_date(date))
+dt2
+month_ener <- dt2 %>% 
+  mutate(month = factor(month(date, label = T), ordered = T)) %>%
+  group_by(month) %>% 
+  count2(energy, sort = F) %>% 
+  filter(sum(n) > 10) %>% 
+  ungroup() %>% 
+  complete(nesting(month), energy, fill = list(n = 0L, prop = 0)) %>% 
+  mutate(energy = factor(energy, ordered = T)) 
+
+month_ener %>% 
+  pivot_wider(month, names_from = energy, values_from = prop, names_prefix = "energy_")  %>% 
+  replace_na(list(energy_1 = 0, energy_2 = 0, energy_3 = 0))  
+
+month_ener %>% 
+  ggplot(aes(month, prop, group = energy, colour = energy)) +
+  geom_line() +
+  geom_point() +
+  theme_minimal()
 
 # weight --------------
 dt <- read_excel(file_name2, sheet = "Weight", skip = 0) %>%

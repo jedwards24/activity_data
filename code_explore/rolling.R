@@ -1,18 +1,19 @@
 # Experimenting with rolling averages. 
 # Trying tsibble packages.
 library(tidyverse)
-#library(lubridate)
+library(tsibble)
+library(lubridate)
+theme_set(theme_minimal())
 tot <- readRDS("data_processed/totals.RDS")
 
-dt %>% 
+tot %>% 
   filter(type == "R") %>% 
   select(date, time) %>% 
   mutate(cum = cumsum(time))
   group_by(date) %>% 
   summarise(cum = cumsum(time))
-?cumsum
 
-library(tsibble)
+count_nas(tot)
 tsb <- tot %>% 
   filter(type %in% c("B", "R", "F")) %>% 
   as_tsibble(index = date, key = type) %>% 
@@ -34,14 +35,20 @@ tt %>%
   ggplot(aes(x = date, y = time_ma, color = type)) +
   geom_line()
 
+tt %>% 
+  ggplot(aes(x = date, y = time_ma)) +
+  geom_line() +
+  facet_wrap(~type)
+
 # plot B MA against R MA
 rb <- tt %>% 
-  filter(!is.na(time_ma28), type != "F") %>%
-  select(type, date, time_ma28) %>% 
-  pivot_wider(names_from = type, values_from = time_ma28)
+  filter(!is.na(time_ma), type != "F") %>%
+  select(type, date, time_ma) %>% 
+  pivot_wider(names_from = type, values_from = time_ma) %>% 
+  mutate(year = factor(year(date), ordered = TRUE))
 
 ggplot(rb, aes(x = B, y = R)) +
-  geom_point() +
+  geom_point(aes(color = year)) +
   geom_smooth(method = lm, se = FALSE)
 
 cor(rb$R, rb$B)
@@ -92,37 +99,27 @@ tsb <- tot %>%
     time / 120
   )) %>% 
   group_by(date) %>% 
-  summarise(aer = pmin(sum(aer), 1)) %>% 
+  summarise(aer = pmin(sum(aer), 2)) %>% 
   as_tsibble(index = date)
   
 tt <- tsb %>% 
   mutate(time_ma = slide_dbl(aer, mean, .size = 42))
 
 ggplot(tt, aes(x = date, y = time_ma)) +
-  geom_line()
+  geom_line() +
+  geom_hline(yintercept = mean(tt$aer), lty = 2, alpha = 0.5)
+mean(tt$aer)
 
 # Load activity data
-log18 <- readRDS("data_processed/log_2018.RDS")
-log13 <- readRDS("data_processed/log_2013.RDS")
-
-log18_simp <- log18 %>% 
-  select_at(c(names(log13)[-1], "description")) %>%
-  select(-notes) %>% 
-  rename(notes = description)
-
-log_all <- mutate(log18_simp, week_data = 0) %>%  
-  bind_rows(log13) %>% 
-  mutate(week_data = as.logical(week_data)) %>% 
-  rename(name = notes) %>% 
-  arrange(date)
+log_all <- readRDS("data_processed/log_all.RDS")
 
 tsb <- log_all %>%
   filter(type %in% c("B", "R", "F")) %>% 
 #  filter(type %in% c("B", "R")) %>% 
   mutate(aer = ifelse(
     type == "R", 
-    pmin(time / 60, 1),
-    pmin(time / 120, 1)
+    pmin(time / 60, 2),
+    pmin(time / 120, 2)
   )) %>% 
   group_by(date) %>% 
   summarise(aer = sum(aer)) %>% 
@@ -183,3 +180,4 @@ month_aer <- tmn2 %>%
 
 ggplot(month_aer, aes(x = yrmn, y = month_aer, fill = type)) +
   geom_col()
+

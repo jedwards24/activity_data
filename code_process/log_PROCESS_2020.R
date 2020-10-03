@@ -10,13 +10,13 @@ library(lubridate)
 
 file_name <- "C:/Users/James/Dropbox/Mine/Personal/Activity Record 2020.xlsx"
 
-log_master <- read_excel(file_name, sheet="2020", range = cell_cols("A:T"))
+log_master <- read_excel(file_name, sheet="2020", range = cell_cols("A:U"))
 
 # trim rows with no entry
 log <- filter(log_master, !is.na(Type))
 
 #Rename cols
-colnames(log) <- c("Date", "Type", "Subtype", "Time", "Distance", "Ascent", "Norm_power", "Description", "Terrain", 
+colnames(log) <- c("Date", "Type", "Subtype", "Time", "Distance", "Ascent", "Ave_power", "Norm_power", "Description", "Terrain", 
                    "Total_time", "Quick", "Feel", "Enjoy", "Physical_cost", "Mental_cost", 
                    "Feel_after", "Quality", "Quality_types", "Time_on", "Notes")
 
