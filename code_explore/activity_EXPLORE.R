@@ -11,6 +11,7 @@ library(tsibble)
 source("functions.R")
 
 log_all <- readRDS("data_processed/log_all.RDS")
+totals <- readRDS("data_processed/totals.RDS")
 
 count(log_all, week_data)
 # names(log_all) <- str_to_lower(names(log_all))
@@ -144,6 +145,21 @@ db %>%
   filter(distance >= 50) %>% 
   plot_ly(x = ~distance, y = ~kph_all, colour = ~year, size = ~ascent_pc)
 
+# Recent longest rides --------------
+weeks <- 12
+n <- 10
+recent <- log_all %>% 
+  filter(type == "B") %>%
+  mutate(weeks_ago = edwards::diff_days(today(), date) / 7) %>% 
+  filter(weeks_ago <= weeks) %>%
+  arrange(desc(time)) %>% 
+  top_n(n, time)
+recent %>% 
+  ggplot(aes(weeks_ago, time / 60, label = name)) +
+  geom_point(aes(size = ascent)) +
+  ggrepel::geom_text_repel() +
+  labs(y = "Hours", x = "Weeks Ago")
+
 # Five longest (distance) R, B and F activities --------------
 log_all %>% filter(type %in% c("R", "B", "F")) %>%
   filter(week_data == 0) %>%
@@ -242,6 +258,10 @@ rides %>%
   ggplot(aes(size = sqrt(1 / days_ago), x = distance, y = ascent)) +
   geom_point()
 
+rides %>% 
+  ggplot(aes(x = days_ago, y = time / 60, size = ascent)) +
+  geom_point()
+
 # Strava-style training log ------------
 tl <- log_all %>% 
   filter(type %in% c("R", "B", "F")) %>% 
@@ -334,3 +354,90 @@ log_all %>%
   ggplot(aes(date, distance, size = distance, colour = distance)) +
   geom_point()
 
+# Consecutive days riding
+totb <- totals %>% 
+  filter(type %in% c("B", "T")) #just B
+count(totb, type)
+
+b2 <- totb %>% 
+  mutate(rides2 = slide_dbl(distance, ~sum(.>0), .before = 1)) %>% 
+  mutate(dist2 = slide_dbl(distance, sum, .before = 1))
+
+count2(b2, rides2)
+b2c <- b2 %>% 
+  group_by(year = year(date)) %>% 
+  count2(rides2, sort = F) %>% 
+  ungroup() %>% 
+  mutate(across(1:2, as.factor)) 
+  
+b2c %>%
+  ggplot(aes(year, prop, fill = rides2)) +
+  geom_col()
+
+# distance total of consecutive rides
+b2d <- b2 %>% 
+  mutate(year = factor(year(date))) %>% 
+  mutate(across(1:2, as.factor)) %>% 
+  filter(rides2 == 2)
+
+count2(b2d, year)
+
+b2d %>%
+  ggplot(aes(distance, fill = year)) +
+  geom_density(alpha = 0.5)
+
+b2d %>%
+  ggplot(aes(dist2, year)) +
+  geom_boxplot()
+
+# convert to one row per pair of rides 
+
+d19 <- b2 %>% 
+  mutate(r1 = lag(distance),
+         r2 = distance) %>% 
+  filter(year(date) == 2019,
+         rides2 != 0) %>% 
+  mutate(first_of_2 = lead(rides2) == 2) %>% 
+  filter(first_of_2 | rides2 == 2) 
+prinf(d19)
+d19 %>% 
+  filter(rides2 == 2) %>% 
+  select(date, r1, r2) %>% 
+  mutate(id = row_number()) %>% 
+  pivot_longer(starts_with("r"), values_to = "dist", names_to = "ride", names_prefix = "r") %>% 
+  ggplot(aes(id, dist, fill = ride)) +
+  geom_col()
+  
+# as function
+consecutive <- function(totals, n = 2) {
+  totals %>% 
+    filter(type %in% c("B", "T")) %>% #just B atm 
+    mutate(n_rides2 = slide_dbl(distance, ~sum(.>0), .before = 1)) %>% 
+    mutate(dist_total = slide_dbl(distance, sum, .before = 1)) %>% 
+    mutate(dist_1 = lag(distance),
+           dist_2 = distance) %>% 
+    filter(n_rides2 == 2) %>% 
+    select(date, dist_1, dist_2, dist_total) %>% 
+    mutate(year = factor(year(date)))
+  
+}
+cons <- consecutive(totals) %>% 
+  mutate(id = row_number())  
+
+cons %>% 
+  select(-dist_total) %>% 
+  filter(year == 2020) %>% 
+  pivot_longer(starts_with("dist"), values_to = "dist", names_to = "ride", names_prefix = "dist_") %>% 
+  ggplot(aes(date, dist, fill = ride)) +
+  geom_col()
+
+cons %>% select(-dist_total) %>% 
+  ggplot(aes(dist_1, dist_2, colour = year)) +
+  geom_point()
+
+top5 <- b2d %>% 
+  group_by(year) %>% 
+  slice_max(dist2, n = 5) %>% 
+  mutate(rank = row_number(desc(dist2)))
+top5 %>% 
+  filter(rank == 1)

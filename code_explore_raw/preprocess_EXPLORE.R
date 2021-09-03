@@ -20,6 +20,7 @@ source("activity_FUNC.R")
 file_name <- "C:/Users/James/Dropbox/Mine/Personal/Activity Record.xlsx"
 
 excel_sheets(file_name) %>% datapasta::dpasta()
+c("Log", "Stress&Health", "Shoes", "Workout Record", "Routes", "Summary - months", "Summary - weeks", "Record progression", "TL new", "TL new out", "Races", "Rides&runs", "Stresses", "Sleep", "workouts_print", "aux_print", "Records", "Health measures", "TL old", "TL output", "print", "Workout (old)", "Health print", "SAM")
 dt <- read_excel(file_name, sheet = "Stress&Health", skip = 2)
 
 
@@ -74,15 +75,15 @@ month_ener %>%
   theme_minimal()
 
 # weight --------------
-dt <- read_excel(file_name2, sheet = "Weight", skip = 0) %>%
-  rename(notes = `...9`) %>% 
+
+dtw <- read_excel(file_name3, sheet = "Weight", skip = 0, guess_max = 1000, range = cell_cols(1:10)) %>% 
   rename_all(~str_replace_all(., " ", "_")) %>% 
   rename_all(str_to_lower) %>% 
   rename_all(~str_remove_all(., "_%")) %>% 
   rename(weight = `weight_(kg)`) %>% 
   mutate(date = as.Date(date))
 
-ggplot(dt, aes(x = date, y = weight)) +
+ggplot(dtw, aes(x = date, y = weight)) +
   geom_point() +
   geom_smooth()
-qplot(x = date, y = weight, data = dt, geom = "smooth")
+qplot(x = date, y = weight, data = dtw, geom = "smooth") + geom_hline(yintercept = mean(dtw$weight))

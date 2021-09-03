@@ -32,38 +32,6 @@ shoes <- log_all %>%
   bind_rows(df13) %>% 
   arrange(id, year)
 
-if (F){
+if (save_flag){
   saveRDS(shoes, "data_processed/shoes.RDS")
 }
-
-# explore-----
-shoes %>% 
-  filter(type == "R") %>%
-  filter(owned) %>% 
-  group_by(id, name) %>% 
-  summarise(distance = sum(distance)) %>% 
-  arrange(desc(distance)) %>% 
-  print(n = 20)
-
-# summing F and R
-shoes %>% 
-  group_by(id) %>% 
-  summarise(distance = sum(distance), name = unique(name)) %>% 
-  arrange(desc(distance)) %>% 
-  print(n = 25)
-
-#just F
-shoes %>% 
-  filter(type == "F") %>% 
-  group_by(id) %>% 
-  summarise(distance = sum(distance), name = unique(name)) %>% 
-  arrange(desc(distance))
-
-#2020
-shoes %>% 
-  filter(year == 2020) %>% 
-  filter(type == "R") %>% 
-  group_by(id) %>% 
-  summarise(distance = sum(distance), name = unique(name)) %>% 
-  arrange(desc(distance))
-  

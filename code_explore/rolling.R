@@ -3,7 +3,8 @@
 library(tidyverse)
 library(tsibble)
 library(lubridate)
-theme_set(theme_minimal())
+library(slider)
+theme_set(cowplot::theme_minimal_grid())
 tot <- readRDS("data_processed/totals.RDS")
 
 tot %>% 
@@ -21,15 +22,15 @@ tsb <- tot %>%
   mutate(hrs = time / 60)
 
 tsb2 <- tot %>%
-  filter(lubridate::year(date) >= 2014) %>% 
+  filter(lubridate::year(date) >= 2018) %>% 
   filter(type %in% c("B", "R", "F")) %>% 
   as_tsibble(index = date, key = type) %>% 
   #  arrange(date) %>% 
-  mutate(hrs = time / 60 * 7)
+  mutate(hrs = time / 60)
 
 tt <- tsb2 %>% 
-  group_by_key() %>% 
-  mutate(time_ma = slide_dbl(hrs, mean, .size = 42))
+#  group_by_key() %>% 
+  mutate(time_ma = slide_dbl(hrs, mean, .before = 42))
 
 tt %>% 
   ggplot(aes(x = date, y = time_ma, color = type)) +
@@ -39,6 +40,35 @@ tt %>%
   ggplot(aes(x = date, y = time_ma)) +
   geom_line() +
   facet_wrap(~type)
+
+tt %>% 
+  as_tibble() %>% 
+  filter(type == "B") %>% 
+  slice_max(time_ma, n = 30) %>% 
+  print(n = Inf)
+
+# overlay years bike
+bike <- tot %>%
+  filter(lubridate::year(date) >= 2018) %>% 
+  mutate(year = factor(lubridate::year(date))) %>% 
+  filter(type %in% c("B")) %>% 
+  as_tsibble(index = date) %>%
+  mutate(hrs = time / 60) %>%
+  mutate(hrs_ma = slide_dbl(hrs, mean, .before = 42)) %>% 
+  mutate(dist_ma = slide_dbl(distance, mean, .before = 42)) %>% 
+  as_tibble() %>% 
+  mutate(week = as.numeric(date - floor_date(date, unit = "years")) / 7) 
+
+bike %>% 
+  ggplot(aes(x = week, y = hrs_ma, color = year)) +
+  geom_line(size = 1)
+
+bike %>% 
+  ggplot(aes(x = week, y = dist_ma, color = year)) +
+  geom_line(size = 1)
+
+ggplot(bike, aes(x = hrs_ma, dist_ma)) +
+  geom_point()
 
 # plot B MA against R MA
 rb <- tt %>% 
@@ -145,6 +175,7 @@ tsb2 <- log_all %>%
   )) %>% 
   group_by(date, type) %>% 
   summarise(aer = sum(aer)) %>% 
+  ungroup() %>% 
   as_tsibble(index = date, key = type) %>% 
   fill_gaps(aer = 0L, .full = TRUE) %>% 
   replace_na(list(aer = 0))
@@ -154,7 +185,13 @@ tt2 <- tsb2 %>%
   mutate(aer_ma = slide_dbl(aer, mean, .size = 42))
 
 tt2 %>% 
+  filter(year(date) > 2018) %>% 
+  ggplot(aes(x = date, y = aer_ma, color = type)) +
+  geom_line()
+
+tt2 %>% 
   filter(year(date) > 2015) %>% 
+  filter(type == "B") %>% 
   ggplot(aes(x = date, y = aer_ma, color = type)) +
   geom_line()
 
