@@ -26,26 +26,12 @@ log <- mutate(log, Date=as.Date(Date)) #change Date to date object (from datetim
 log_2018 <- log %>%
   mutate(Total_time = ifelse(is.na(Total_time), Time, Total_time)) %>%
   mutate_if(is.numeric, ~replace_na(., 0)) %>%
-  replace_na(list(Subtype = "(none)")) %>% 
+  mutate_if(is.character, ~replace_na(., "")) %>%
   rename_all(str_to_lower)
 
 # Have left NAs in Description,  Quality_types, Workout_type, Notes
 
-# Create new df with daily totals for each activity type (B, R, F) with  
-# entries for all dates and types even if there was no activity of that type on that day.
-totals_2018 <- log_2018 %>% 
-  filter(type %in% c("B", "R", "F")) %>% 
-  select(c(1:2, 4:6)) %>%
-  group_by(date, type) %>% 
-  summarise_all(sum) %>%
-  ungroup() %>% 
-  arrange(date) %>%
-  complete(date = seq.Date(ymd("2018-01-01"), ymd("2019-12-31"), by = "days"),
-           type = c("B", "R", "F"),
-           fill = list(time = 0, distance = 0, ascent = 0))
-
 if(save_flag){
   saveRDS(log_master, "data_processed/log_2018_raw.RDS")
   saveRDS(log_2018, "data_processed/log_2018.RDS")
-  saveRDS(totals_2018, "data_processed/log_2018_totals.RDS")
 }

@@ -4,13 +4,17 @@ library(tidyverse)
 library(readxl)
 library(edwards)
 library(lubridate)
+source("functions.R")
 
 process_folder <- "code_process"
 save_flag <- TRUE
 
-if (F){
+if (FALSE){
   source(file.path(process_folder, "log_PROCESS_2013.R"))
   source(file.path(process_folder, "log_PROCESS_2018.R"))
 }
 source(file.path(process_folder, "log_PROCESS_2020.R"))
 source(file.path(process_folder, "log_MERGE.R"))
+check_data(log_all)
+source(file.path(process_folder, "totals_PROCESS.R"))
+source(file.path(process_folder, "shoes_PROCESS.R"))
