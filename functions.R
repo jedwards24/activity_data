@@ -32,9 +32,9 @@ split_week_data <- function(log, max_week=7){
 }
 
 ###################
-#Moving average for a vector.
-#http://www.markhneedham.com/blog/2014/09/13/r-calculating-rolling-or-moving-averages/
-#filter() returns a time series object but this just returns the vector part.
+# Moving average for a vector.
+# http://www.markhneedham.com/blog/2014/09/13/r-calculating-rolling-or-moving-averages/
+# filter() returns a time series object but this just returns the vector part.
 ###################
 move_ave <- function(x,n=7){
   return(as.numeric(stats::filter(x, rep(1/n,n), sides=1)))
@@ -79,6 +79,16 @@ mostest <- function(data, activity_type, measure, n = 15) {
     arrange(type, desc(get(measure)))
 }
 
+# Using current tidyeval 
+mostest2 <- function(data, activity_type, measure, n = 15) {
+  data %>% 
+    filter(type == activity_type) %>%
+    filter(week_data == 0) %>%
+    select(-week_data) %>% 
+    top_n(n = n, wt = .data[[measure]]) %>% 
+    arrange(type, desc(.data[[measure]]))
+}
+
 #################
 # Returns tibble, counts by year, of activities of `type` that have `measure` >= `threshold`.
 #################
@@ -92,3 +102,46 @@ n_over <- function(data, activity_type, measure, threshold) {
     count()
 }
 
+###############
+# Checks supplied data for NAs and for obvious unlikely values.
+# Currently these are if distance is zero or greater than time.
+# NAs are only reported as a message.
+# Any other issues are returned as tibble with just the rows where these
+# occur.
+################
+check_data <- function(dt) {
+  if (any(is.na(dt))){
+    cli::cli_alert_info("There are NAs in the data.")
+  }else{
+    cli::cli_alert_success("There no NAs in the data.")
+  }
+  errs <- dt %>% 
+    filter(type %in% c("B", "R", "F")) %>% 
+    filter(!week_data) %>% 
+    filter(distance == 0 | (distance >= time))
+  if (nrow(errs) == 0) {
+    cli::cli_alert_success("No problems in the data.")
+    return(invisible(errs))
+  }
+  return(errs)
+}
+
+################
+# Create summary tibble daily totals from `log` for each activity type (B, R, F) with  
+# entries for all dates and types even if there was no activity of that type on that day.
+# Also adds an activity count as column `n` (includes week data).
+# The range of dates in output runs from `start_date` to `end_date`.
+###############
+total_by_day <- function(log, start_date, end_date) {
+  log %>% 
+    filter(type %in% c("B", "R", "F")) %>% 
+    select(date, type, time, distance, ascent) %>%
+    mutate(n = 1) %>% 
+    group_by(date, type) %>% 
+    summarise_all(sum) %>%
+    ungroup() %>% 
+    arrange(date) %>%
+    complete(date = seq.Date(start_date, end_date, by = "days"),
+             type = c("B", "F", "R"),
+             fill = list(time = 0, distance = 0, ascent = 0, n = 0))
+}
