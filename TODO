@@ -1,6 +1,7 @@
 TO DO
 -----
 Process files & git or ignore:
+
 - Redo NOTES.Rmd
 - rolling
 - preprocess_EXPLORE
@@ -9,6 +10,4 @@ News file?
 Create report on recent activity (6-12 weeks?) - just use 2020 data
 Reports on previous years
 Write Rmd on basic data structure (pre and post-processing)
-Workflow for rapid updating from new data (merge, master etc.)
-Add number of activities to totals
-Data sense checks e.g. time/distance not mixed up (see checks.R)
+Add checks on bike parts processing

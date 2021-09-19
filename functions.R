@@ -81,10 +81,12 @@ mostest <- function(data, activity_type, measure, n = 15) {
 
 # Using current tidyeval 
 mostest2 <- function(data, activity_type, measure, n = 15) {
+  if ("week_data" %in% names(data)){
+    data <- filter(data, week_data == 0) %>%
+      select(-week_data) 
+  }
   data %>% 
     filter(type == activity_type) %>%
-    filter(week_data == 0) %>%
-    select(-week_data) %>% 
     top_n(n = n, wt = .data[[measure]]) %>% 
     arrange(type, desc(.data[[measure]]))
 }
@@ -145,3 +147,59 @@ total_by_day <- function(log, start_date, end_date) {
              type = c("B", "F", "R"),
              fill = list(time = 0, distance = 0, ascent = 0, n = 0))
 }
+
+# Adds rows for "new" and "now" events to a table of bike maintenance `events`.
+# `standard_parts` is a vector of parts for which events should be added for all bikes
+# named in `bikes`. `new_dates`
+expand_events <- function(events, standard_parts, new_dates, bikes = c("cgr", "cube")) {
+  parts_all <- expand_grid(bike = bikes, part = standard_parts) %>% 
+    bind_rows(select(events_load, bike, part)) %>% 
+    distinct() %>% 
+    arrange(bike, part)
+  
+  events_new <- parts_all %>% 
+    left_join(new_dates, by = "bike") %>% 
+    filter(!part %in% filter(events, event == "new")$part)
+  retired <- events %>% 
+    filter(event == "retire") 
+  
+  events_now <- parts_all %>%  
+    mutate(date = today() + 1) %>% 
+    mutate(event = "now") %>% 
+    anti_join(retired, by = c("bike", "part"))
+  
+  events_new %>%
+    bind_rows(events) %>%
+    bind_rows(events_now) %>% 
+    arrange(bike, part)
+}
+
+# Helper function to be used row wise with maintenance event data.
+# Returns integer total of distance of activities on `bike` between
+# `date1` and `date2`. `data` is standard activity data. 
+# `power_data` is activity data filtered to only contain rows where 
+# a power meter was used.
+part_distance <- function(date1, date2, bike, data, power_data) {
+  if (is.na(date1)) date1 <- ymd("1900-01-01")
+  if (is.na(date2)) date1 <- ymd("2100-01-01")
+  dt_dates <- data %>% 
+    filter(date >= date1,
+           date < date2)
+  subtype_filter <- case_when(
+    bike == "cgr" ~ "c",
+    bike == "cube" ~ "a"
+  )
+  if(bike == "4iiii"){
+    power <- power_data %>% 
+      filter(date >= date1,
+             date < date2) %>% 
+      pull(distance) %>% 
+      sum() 
+    return(power)
+  }
+  filter(dt_dates, subtype == subtype_filter) %>% 
+    pull(distance) %>% 
+    sum()
+}
+
+
