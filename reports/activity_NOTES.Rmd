@@ -4,7 +4,7 @@ output: html_document
 ---
 
 ```{r setup, include = FALSE}
-knitr::opts_chunk$set(echo = F, message = F, error = F, cache = F)
+knitr::opts_chunk$set(echo = FALSE, message = FALSE, error = FALSE, cache = FALSE)
 library(tidyverse)
 library(edwards)
 library(knitr)

@@ -8,6 +8,7 @@ library(reactable)
 library(plotly)
 library(edwards)
 library(tsibble)
+library(slider)
 source("functions.R")
 
 log_all <- readRDS("data_processed/log_all.RDS")
@@ -146,8 +147,8 @@ db %>%
   plot_ly(x = ~distance, y = ~kph_all, colour = ~year, size = ~ascent_pc)
 
 # Recent longest rides --------------
-weeks <- 12
-n <- 10
+weeks <- 20
+n <- 20
 recent <- log_all %>% 
   filter(type == "B") %>%
   mutate(weeks_ago = edwards::diff_days(today(), date) / 7) %>% 
@@ -158,7 +159,13 @@ recent %>%
   ggplot(aes(weeks_ago, time / 60, label = name)) +
   geom_point(aes(size = ascent)) +
   ggrepel::geom_text_repel() +
-  labs(y = "Hours", x = "Weeks Ago")
+  labs(y = "Hours", x = "Weeks Ago") 
+
+recent %>% 
+  ggplot(aes(time / 60, ascent, label = name)) +
+  geom_point(aes(size = 1 / sqrt(weeks_ago))) +
+  ggrepel::geom_text_repel() +
+  labs(x = "Hours", y = "Ascent") 
 
 # Five longest (distance) R, B and F activities --------------
 log_all %>% filter(type %in% c("R", "B", "F")) %>%
@@ -265,7 +272,7 @@ rides %>%
 # Strava-style training log ------------
 tl <- log_all %>% 
   filter(type %in% c("R", "B", "F")) %>% 
-  filter(year(date) == 2020) %>% 
+  filter(year(date) == 2021) %>% 
   mutate(weeks_ago = isoweek(today()) - isoweek(date),
          wday = wday(date, label = TRUE)) %>% 
   filter(weeks_ago <= 4) %>%
@@ -280,7 +287,8 @@ isoweek(tl$date[1])
 tl %>% 
   filter(any(act_ind > 1))
 tl %>% 
-  ggplot(aes(x = wday, y = weeks_ago + pos, size = distance, colour = type)) +
+  filter(weeks_ago >= 0) %>% 
+  ggplot(aes(x = wday, y = weeks_ago + pos, size = time, colour = type)) +
   geom_point() + 
   scale_size(range = c(10, 30)) +
   ylab("Weeks Ago") +
@@ -290,28 +298,28 @@ tl %>%
   theme_classic()
 
 # recent weeks --------
-ww <- log_all %>% filter(type %in% c("R", "B", "F")) %>% 
-  filter(year(date) == 2020) %>% 
-  mutate(week = isoweek(date)) %>% 
-  mutate(weeks_ago = isoweek(today()) - week) %>% 
-#  filter(weeks_ago <= 4) %>%
-  group_by(week, type) %>% 
+ww <- log_all %>% 
+  filter(type %in% c("R", "B", "F")) %>% 
+  mutate(year_week = yearweek(date)) %>% 
+  mutate(weeks_ago = yearweek(today()) - year_week) %>% 
+  filter(weeks_ago <= 12) %>%
+  group_by(year_week, type) %>% 
   summarise(n = n(),
             dist = sum(distance),
             ascent = sum(ascent), 
-            time = sum(time) / 60)
+            time = sum(time) / 60) %>% 
+  ungroup()
 
 ww %>% 
   filter(type != "F") %>% 
-  ggplot(aes(week, time, fill = type)) +
+  ggplot(aes(year_week, time, fill = type)) +
   geom_col()
 
 ww %>%  
-  ggplot(aes(week, time, group = type, colour = type)) +
+  ggplot(aes(year_week, time, group = type, colour = type)) +
   geom_line() +
   ylim(c(0, NA))
 
-view(ww)
 # bike rides -----------
 # longest ride each week
 rides <- log_all %>% 
@@ -354,23 +362,21 @@ log_all %>%
   ggplot(aes(date, distance, size = distance, colour = distance)) +
   geom_point()
 
-# Consecutive days riding
-totb <- totals %>% 
-  filter(type %in% c("B", "T")) #just B
-count(totb, type)
-
-b2 <- totb %>% 
+# Consecutive days riding-----------
+b2 <- totals %>% 
+  filter(type %in% c("B", "T")) %>% #just B 
   mutate(rides2 = slide_dbl(distance, ~sum(.>0), .before = 1)) %>% 
-  mutate(dist2 = slide_dbl(distance, sum, .before = 1))
-
+  mutate(dist2 = slide_dbl(distance, sum, .before = 1)) 
+  
+count(b2, type)
 count2(b2, rides2)
-b2c <- b2 %>% 
+b2_count <- b2 %>% 
   group_by(year = year(date)) %>% 
   count2(rides2, sort = F) %>% 
   ungroup() %>% 
   mutate(across(1:2, as.factor)) 
   
-b2c %>%
+b2_count %>%
   ggplot(aes(year, prop, fill = rides2)) +
   geom_col()
 
@@ -419,11 +425,13 @@ consecutive <- function(totals, n = 2) {
     filter(n_rides2 == 2) %>% 
     select(date, dist_1, dist_2, dist_total) %>% 
     mutate(year = factor(year(date)))
-  
 }
+
+
 cons <- consecutive(totals) %>% 
   mutate(id = row_number())  
-
+filter(d19, rides2 == 2)
+filter(cons, year(date) == 2019)
 cons %>% 
   select(-dist_total) %>% 
   filter(year == 2020) %>% 
@@ -441,3 +449,38 @@ top5 <- b2d %>%
   mutate(rank = row_number(desc(dist2)))
 top5 %>% 
   filter(rank == 1)
+
+# Offroad running paces -----------
+fr <- log_all %>% 
+  filter(type == "R") %>% 
+  mutate(pace = time / distance,
+         climb_rate = ascent / distance) %>% 
+  select(-week_data, -subtype)
+fr %>% 
+  ggplot(aes(pace, climb_rate)) +
+  geom_point()
+fr %>% 
+  arrange(desc(pace))
+mostest2(fr, "R", "pace")
+fr %>% 
+  arrange(pace)
+fr2 <- fr %>% 
+  filter(pace < 13, climb_rate > 20) %>% 
+  arrange(desc(climb_rate))
+fr2 %>% 
+  ggplot(aes(pace, climb_rate)) +
+  geom_point() 
+#  geom_smooth(method="lm")
+cor(fr2$pace, fr2$climb_rate)
+fr2 %>% 
+  mutate(year = factor(year(date), ordered = TRUE)) %>%
+  filter(year > 2015) %>% 
+  ggplot(aes(pace, climb_rate, colour = year)) +
+  geom_point() 
+
+fr2 %>% 
+  arrange(pace)
+fr2 %>% 
+  filter(year(date) == 2021, time > 40)
+fr2 %>% 
+  filter(time > 90, climb_rate > 35, climb_rate < 45) 
