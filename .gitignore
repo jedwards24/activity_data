@@ -36,7 +36,9 @@ vignettes/*.pdf
 rsconnect/
 
 # Added by me
-activity_data.Rproj
 old_code.R
 data_processed
 reports/*.html
+data/*.xlsx
+reports/*_cache
+

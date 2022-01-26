@@ -8,7 +8,8 @@ library(readxl)
 library(edwards)
 library(lubridate)
 
-file_name <- "C:/Users/James/Dropbox/Mine/Personal/Activity Record 2020.xlsx"
+#file_name <- "C:/Users/James/Dropbox/Mine/Personal/Activity Record 2020.xlsx"
+file_name <- file.path(data_path, "Activity record 2020.xlsx")
 
 log_master <- read_excel(file_name, sheet="2020", range = cell_cols("A:U"))
 
@@ -16,8 +17,8 @@ log_master <- read_excel(file_name, sheet="2020", range = cell_cols("A:U"))
 log <- filter(log_master, !is.na(Type))
 
 #Rename cols
-colnames(log) <- c("Date", "Type", "Subtype", "Time", "Distance", "Ascent", "Ave_power", "Norm_power", "Description", "Terrain", 
-                   "Total_time", "Quick", "Feel", "Enjoy", "Physical_cost", "Mental_cost", 
+colnames(log) <- c("Date", "Type", "Subtype", "Time", "Distance", "Ascent", "Ave_power", "Norm_power", "Description", "Terrain",
+                   "Total_time", "Quick", "Feel", "Enjoy", "Physical_cost", "Mental_cost",
                    "Feel_after", "Quality", "Quality_types", "Time_on", "Notes")
 
 log <- mutate(log, Date=as.Date(Date)) #change Date to date object (from datetime)

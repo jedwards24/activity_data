@@ -23,7 +23,7 @@ Probably should be shiny document.
 ```{r owned}
 shoes %>% 
   filter(owned) %>% 
-  group_by(id, name, type) %>% 
+  group_by(id, name) %>% 
   summarise(dist_run = sum(distance * (type %in% "R")),
             dist_walk = sum(distance * (type %in% "F")),
             dist_all = sum(distance * (type %in% c("F", "R")))) %>% 

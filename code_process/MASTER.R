@@ -1,10 +1,13 @@
-# One-stop place from which to run all data processing scripts 
+# One-stop place from which to run all data processing scripts
 
 library(tidyverse)
 library(readxl)
 library(edwards)
 library(lubridate)
 source("functions.R")
+
+data_path <- "C:/Users/James/Dropbox/Mine/Personal"
+data_path <- "data"
 
 process_folder <- "code_process"
 save_flag <- TRUE
