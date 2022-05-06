@@ -203,4 +203,17 @@ part_distance <- function(date1, date2, bike, data, power_data) {
     sum()
 }
 
+# Helper function used in `log_PROCESS_yyyy.R`
+log_replace_nas <- function(x) {
+  mutate(x, total_time = ifelse(is.na(total_time), time, total_time)) %>%
+    mutate_if(is.numeric, ~replace_na(., 0)) %>%
+    mutate_if(is.character, ~replace_na(., ""))
+}
 
+# Helper function used in `log_MERGE.R`
+log_simplify <- function(log, keep_cols) {
+  log %>%
+    select(all_of(keep_cols)) %>%
+    rename(notes = description) %>%
+    mutate(week_data = 0)
+}
