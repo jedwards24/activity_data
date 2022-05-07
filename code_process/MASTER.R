@@ -1,7 +1,7 @@
 # One-stop place from which to run all data processing scripts
 
+# Also used are readxl, glue, cli
 library(tidyverse)
-library(readxl)
 library(edwards)
 library(lubridate)
 source("functions.R")
@@ -14,10 +14,10 @@ save_flag <- TRUE
 
 if (FALSE){
   source(file.path(process_folder, "log_PROCESS_2013.R"))
-  source(file.path(process_folder, "log_PROCESS_2018.R"))
-  source(file.path(process_folder, "log_PROCESS_2020.R"))
+  log_process("2018")
+  log_process("2020")
 }
-source(file.path(process_folder, "log_PROCESS_2022.R"))
+log_process("2022")
 source(file.path(process_folder, "log_MERGE.R"))
 check_data(log_all)
 source(file.path(process_folder, "totals_PROCESS.R"))

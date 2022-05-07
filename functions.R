@@ -203,7 +203,52 @@ part_distance <- function(date1, date2, bike, data, power_data) {
     sum()
 }
 
-# Helper function used in `log_PROCESS_yyyy.R`
+# Read activity log from spreadsheet and process.
+# A list is returned (invisibly) with two tibbles: (1) processed, (2) raw.
+# If `save_flag = TRUE` the the two sets are also saved.
+log_process <- function(year, save_flag = TRUE, data_path = "data") {
+  stopifnot(year %in% c("2018", "2020", "2022"))
+  if (year == 2018){
+    new_names <- c("date", "type", "subtype", "time", "distance", "ascent", "description", "terrain",
+                   "total_time", "strides", "sam", "feel", "enjoy", "physical_cost", "mental_cost",
+                   "feel_after", "quality", "quality_types", "workout_type", "time_hard", "time_mod",
+                   "density", "hilly", "total_work", "time_on", "recovery", "notes")
+    cells <- "A:AA"
+  }else{
+    new_names <-  c("date", "type", "subtype", "time", "distance", "ascent", "ave_power",
+                    "norm_power", "description", "terrain", "total_time", "quick", "feel",
+                    "enjoy", "physical_cost", "mental_cost", "feel_after", "quality",
+                    "quality_types", "time_on", "notes")
+    cells <- "A:U"
+  }
+  if (year == 2022){
+    log_master <- googlesheets4::read_sheet("1w9vNdPAB3qxqnqbToHmGBjxSSAN0-ckYuK_96oluSG8",
+                                            col_types = "Dccnnnnncnnnnnnnnncnc")
+  }else{
+    file_name <- file.path(data_path, glue::glue("Activity record {year}.xlsx"))
+    log_master <- readxl::read_excel(file_name, sheet = year, range = readxl::cell_cols(cells))
+  }
+  cli::cli_alert_success("Read activity log from {year}.")
+
+  log <- setNames(log_master, new_names) %>%
+    filter(!is.na(type)) %>%
+    mutate(date=as.Date(date)) %>%
+    log_replace_nas()
+
+  if(save_flag){
+    save_name_1 <- glue::glue("data_processed/log_{year}_raw.RDS")
+    save_name_2 <- glue::glue("data_processed/log_{year}.RDS")
+    saveRDS(log_master, save_name_1)
+    saveRDS(log_2022, save_name_2)
+    cli::cli_alert_info("Saved {save_name_1} and {save_name_2}.")
+  }
+  out_list <- list(log, log_master)
+  names(out_list) <- paste0(c("log_", "log_raw_"), year)
+  invisible(out_list)
+}
+
+# Helper function used in `log_process()`.
+#Leaves NAs in columns: Description, Quality_types, Notes.
 log_replace_nas <- function(x) {
   mutate(x, total_time = ifelse(is.na(total_time), time, total_time)) %>%
     mutate_if(is.numeric, ~replace_na(., 0)) %>%

@@ -3,15 +3,10 @@
 # See "activity_EXPLORE.R" for summary of dfs created.
 #############
 
-library(tidyverse)
-library(readxl)
-library(edwards)
-library(lubridate)
 #file_name <- "C:/Users/James/Dropbox/Mine/Personal/Activity Record.xlsx"
 file_name <- file.path(data_path, "Activity record.xlsx")
-source("functions.R")
 
-dt <- read_excel(file_name, sheet="Log", skip=12)
+dt <- readxl::read_excel(file_name, sheet="Log", skip=12)
 
 #trim rows with no entry and remove blank column
 log <- dt %>%
