@@ -67,7 +67,7 @@ eddington <- function(data, activity_type, measure = "Distance", unit_adjust = 1
 }
 
 ################
-# Returns a tibble of the `n activities of `activity_type` with the largest "measure"
+# Returns a tibble of the `n` activities of `activity_type` with the largest "measure"
 # (e.g. 5 runs/cycles with most ascent/distance/time).
 ################
 mostest <- function(data, activity_type, measure, n = 15) {
@@ -239,7 +239,7 @@ log_process <- function(year, save_flag = TRUE, data_path = "data") {
     save_name_1 <- glue::glue("data_processed/log_{year}_raw.RDS")
     save_name_2 <- glue::glue("data_processed/log_{year}.RDS")
     saveRDS(log_master, save_name_1)
-    saveRDS(log_2022, save_name_2)
+    saveRDS(log, save_name_2)
     cli::cli_alert_info("Saved {save_name_1} and {save_name_2}.")
   }
   out_list <- list(log, log_master)

@@ -1,0 +1,53 @@
+---
+title: "Summer 2021"
+output: html_document
+---
+
+```{r setup, include = FALSE}
+knitr::opts_chunk$set(echo = FALSE, message = FALSE, error = FALSE, cache = TRUE)
+library(tidyverse)
+library(lubridate)
+library(edwards)
+library(knitr)
+library(kableExtra)
+```
+
+```{r dt}
+start_date <- ymd("2021-04-01")
+end_date <- ymd("2021-10-31")
+dt <- readRDS("../data_processed/log_all.RDS") %>% 
+  filter(between(date, start_date, end_date)) %>% 
+  select(-week_data)
+```
+
+A summary of activities from April 2021 to October 2021 (inclusive).
+
+I did `r nrow(dt)` activities.
+
+```{r}
+count(dt, type) %>% 
+  my_kable()
+```
+
+# Cycling
+
+
+## Tiles
+
+
+## Hill Climbs
+
+New climbs:
+
+- Yorkshire East (5): White gate, Ganton hill, Egton high moor, Rosedale chimney, Blakey bank.
+- Scotland Southern (1): Cambret hill.
+- NW Cumbria (8): Kirkstone, Red bank, Hawkshead hill, Garsdale head, Tow top road, 
+  Fell foot brow, Brigsteer brow, Underbarrow road.
+  
+```{r climbs}
+tibble(Area = c("NW Lancashire", "NW Cumbria", "N Yorkshire", "E Yorkshire",
+                "Original 100", "Another 100"),
+       Total = c(17, 38, 19, 21, 100, 100),
+       Done = c(10, 11, 5, 5, 9, 10)) %>% 
+  my_kable()
+```

@@ -13,9 +13,9 @@ file_name <- file.path(data_path, "Activity record 2018.xlsx")
 log_master <- read_excel(file_name, sheet="2018", range = cell_cols("A:AA"))
 
 names_2018 <- c("Date", "Type", "Subtype", "Time", "Distance", "Ascent", "Description", "Terrain",
-                   "Total_time", "Strides", "SAM", "Feel", "Enjoy", "Physical_cost", "Mental_cost",
-                   "Feel_after", "Quality", "Quality_types", "Workout_type", "Time_hard", "Time_mod",
-                   "Density", "Hilly", "Total_work", "Time_on", "Recovery", "Notes")
+                "Total_time", "Strides", "SAM", "Feel", "Enjoy", "Physical_cost", "Mental_cost",
+                "Feel_after", "Quality", "Quality_types", "Workout_type", "Time_hard", "Time_mod",
+                "Density", "Hilly", "Total_work", "Time_on", "Recovery", "Notes")
 
 log_2018 <- filter(log_master, !is.na(Type)) %>%
   setNames(str_to_lower(names_2018)) %>%

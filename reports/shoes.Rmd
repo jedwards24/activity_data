@@ -18,8 +18,6 @@ library(reactable)
 
 Experimenting with table formats. 
 
-Probably should be shiny document.
-
 ```{r owned}
 shoes %>% 
   filter(owned) %>% 
@@ -29,7 +27,17 @@ shoes %>%
             dist_all = sum(distance * (type %in% c("F", "R")))) %>% 
   arrange(desc(dist_all)) %>% 
   reactable()  
-#  scroll_box(width = "100%", height = "400px")
+```
+
+```{r owned_dt}
+shoes %>% 
+  filter(owned) %>% 
+  group_by(id, name) %>% 
+  summarise(dist_run = sum(distance * (type %in% "R")),
+            dist_walk = sum(distance * (type %in% "F")),
+            dist_all = sum(distance * (type %in% c("F", "R")))) %>% 
+  arrange(desc(dist_all)) %>% 
+  DT::datatable(caption = "Using DT package")  
 ```
 
 Just running:
@@ -47,9 +55,24 @@ shoes %>%
 
 Just 2021: 
 
-```{r run_2020}
+```{r run_2021}
 shoes %>% 
   filter(year == 2021) %>% 
+  filter(owned) %>% 
+  group_by(id, name) %>% 
+  summarise(dist_run = sum(distance * (type %in% "R")),
+            dist_walk = sum(distance * (type %in% "F")),
+            dist_all = sum(distance * (type %in% c("F", "R")))) %>% 
+  arrange(desc(dist_all)) %>% 
+  my_kable() %>% 
+  scroll_box(width = "100%", height = "400px")
+```  
+
+Just 2022: 
+
+```{r run_2022}
+shoes %>% 
+  filter(year == 2022) %>% 
   filter(owned) %>% 
   group_by(id, name) %>% 
   summarise(dist_run = sum(distance * (type %in% "R")),
