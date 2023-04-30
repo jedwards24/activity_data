@@ -122,7 +122,7 @@ check_data <- function(dt) {
     filter(!week_data) %>%
     filter(distance == 0 | (distance >= time))
   if (nrow(errs) == 0) {
-    cli::cli_alert_success("No problems in the data.")
+    cli::cli_alert_success("No problems found in the data.")
     return(invisible(errs))
   }
   cli::cli_alert_warning("There are problems in the data:")
@@ -261,4 +261,13 @@ log_simplify <- function(log, keep_cols) {
     select(all_of(keep_cols)) %>%
     rename(notes = description) %>%
     mutate(week_data = 0)
+}
+
+# Returns a date vector of the last complete week, starting with Monday.
+# `today_complete` indicates whether today is counted as complete
+# (only matters if today is a Sunday).
+last_complete_week <- function(x, today_complete = TRUE) {
+  if (today_complete) x <- x + 1
+  start <- x - wday(x, week_start = 1) - 6
+  return(seq(start, start + 6, by = "day"))
 }

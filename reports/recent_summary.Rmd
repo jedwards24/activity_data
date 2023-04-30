@@ -1,0 +1,105 @@
+---
+title: "Recent Activity Summary"
+output: html_document
+---
+
+```{r setup, include = FALSE}
+knitr::opts_chunk$set(echo = FALSE, message = FALSE, error = FALSE, cache = FALSE)
+library(tidyverse)
+library(lubridate)
+library(edwards)
+library(knitr)
+library(kableExtra)
+source("../functions.R")
+```
+
+```{r dates}
+last_week <- last_complete_week(today())
+week_starts <- seq(last_week[1] - 77, last_week[1], by = "week")
+```
+
+```{r dt}
+start_date <- week_starts[1]
+end_date <- last_week[7]
+dt <- readRDS("../data_processed/log_all.RDS") %>% 
+  filter(between(date, start_date, end_date)) %>% 
+  select(-week_data) %>% 
+  mutate(week = floor_date(date, unit = "weeks", week_start = 1))
+```
+
+```{r week_totals}
+week_totals <- group_by(dt, week, type) %>% 
+  summarise(across(c(time, distance, ascent), sum)) %>% 
+  ungroup() %>% 
+  pivot_longer(time:ascent, names_to = "metric", cols_vary = "slowest") %>% 
+  complete(week, type, metric, fill = list(value = 0))
+tot_hrs <- week_totals %>% 
+  filter(metric == "time") %>% 
+  mutate(hours = value / 60)
+all_hrs <- tot_hrs %>% 
+  group_by(week) %>% 
+  summarise(hours = sum(hours)) %>% 
+  mutate(type = "All")
+```
+
+A summary of activities for `r length(week_starts)` weeks from `r start_date` to `r end_date` (inclusive).
+
+I did `r nrow(dt)` activities.
+
+```{r}
+count(dt, type) %>% 
+  my_kable()
+```
+
+```{r hours1}
+tot_hrs %>% 
+  bind_rows(all_hrs) %>% 
+  ggplot(aes(week, hours, group = type, col = type)) +
+  geom_line() +
+  geom_point() +
+  labs(x = "Week", y = "Hours", title = "Activity Time by Type")
+```
+
+```{r hours2}
+tot_hrs %>% 
+  ggplot(aes(week, hours, group = type, fill = type)) +
+  geom_col(position = "dodge") +
+  labs(x = "Week", y = "Hours", title = "Activity Time by Type")
+```
+
+```{r hours3}
+tot_hrs %>% 
+  mutate(type = factor(type, c("F", "B", "R"))) %>% 
+  ggplot(aes(week, hours, group = type, fill = type)) +
+  geom_col() +
+  labs(x = "Week", y = "Hours", title = "Activity Time by Type")
+```
+
+```{r hours4}
+tot_hrs %>% 
+  group_by(week) %>% 
+  summarise(hours = sum(hours)) %>% 
+  ggplot(aes(week, hours)) +
+  geom_col() +
+  geom_label(aes(label = round(hours, 1))) +
+  labs(x = "Week", y = "Hours", title = "Total Activity Time")
+```
+
+```{r distance}
+week_totals %>% 
+  filter(type %in% c("F", "R"),
+         metric == "distance") %>% 
+  mutate(type = factor(type, c("F", "R"))) %>% 
+  ggplot(aes(week, value, group = type, fill = type)) +
+  geom_col() +
+  labs(x = "Week", y = "Distance (km)", title = "Foot Distance")
+```
+
+```{r ascent}
+week_totals %>% 
+  filter(metric == "ascent") %>% 
+  mutate(type = factor(type, c("F", "B", "R"))) %>% 
+  ggplot(aes(week, value, group = type, fill = type)) +
+  geom_col() +
+  labs(x = "Week", y = "Ascent (m)", title = "Ascent by Type")
+```
