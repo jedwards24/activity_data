@@ -1,32 +1,34 @@
-date,bike,part,event
-23/03/2019,cgr,chain,replace
-25/10/2020,cgr,bottom bracket,replace
-25/11/2020,cgr,mech hanger,replace
-11/12/2020,cgr,rear gear cable,replace
-22/01/2021,cgr,tyre mplus A,to rear
-22/01/2021,cgr,rear tube,repair
-22/01/2021,cgr,tyre mplus B,to front
-30/07/2020,4iiii,battery,replace
-15/11/2020,cgr,headset,clean
-15/11/2020,cgr,cassette,clean
-15/11/2020,cgr,freehub,clean
-15/11/2020,cgr,jockeys,clean
-15/11/2020,cgr,rear mudguard,clean
-18/03/2021,cgr,chain,replace
-18/03/2021,cgr,jockeys,clean
-18/03/2021,cgr,cassette,clean
-25/03/2021,cgr,front gear cable,replace
-25/03/2021,cgr,handlebar tape,replace
-03/04/2021,4iiii,battery,replace
-17/09/2021,cube,tyre grandsport A,to rear
-17/09/2021,cube,rear tube,repair
-17/09/2021,cube,tyre grandsport B,retire
-17/09/2021,cube,cassette,clean
-17/09/2021,cube,chain,replace
-17/09/2021,cube,jockeys,clean
-17/09/2021,cube,tyre rubino A,new
-22/10/2021,cgr,bottom bracket,clean
-22/10/2021,4iiii,battery,replace
-17/04/2022,cgr,bottom bracket,clean
-17/04/2022,cgr,Brake pads front,replace
-19/07/2022,4iiii,battery,replace
+date,bike,part,event,notes
+23/03/2019,cgr,chain,replace,
+25/10/2020,cgr,bottom bracket,replace,
+25/11/2020,cgr,mech hanger,replace,
+11/12/2020,cgr,rear gear cable,replace,
+22/01/2021,cgr,tyre mplus A,to rear,
+22/01/2021,cgr,rear tube,repair,
+22/01/2021,cgr,tyre mplus B,to front,
+30/07/2020,4iiii,battery,replace,
+15/11/2020,cgr,headset,clean,
+15/11/2020,cgr,cassette,clean,
+15/11/2020,cgr,freehub,clean,
+15/11/2020,cgr,jockeys,clean,
+15/11/2020,cgr,rear mudguard,clean,
+18/03/2021,cgr,chain,replace,Shimano CN-4601
+18/03/2021,cgr,jockeys,clean,
+18/03/2021,cgr,cassette,clean,
+25/03/2021,cgr,front gear cable,replace,
+25/03/2021,cgr,handlebar tape,replace,
+03/04/2021,4iiii,battery,replace,
+17/09/2021,cube,tyre grandsport A,to rear,
+17/09/2021,cube,rear tube,repair,
+17/09/2021,cube,tyre grandsport B,retire,
+17/09/2021,cube,cassette,clean,
+17/09/2021,cube,chain,replace,KMC X10
+17/09/2021,cube,jockeys,clean,
+17/09/2021,cube,tyre rubino A,new,
+22/10/2021,cgr,bottom bracket,clean,
+22/10/2021,4iiii,battery,replace,
+17/04/2022,cgr,bottom bracket,clean,
+17/04/2022,cgr,Brake pads front,replace,
+19/07/2022,4iiii,battery,replace,
+13/09/22,cube,chain,replace,CN-HG601
+09/10/22,cube,rear tube,replace,

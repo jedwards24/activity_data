@@ -1,5 +1,6 @@
 id,name,km_12_13,owned
-1,NB minimus MR10,617.8,1
+0,Misc,0,1
+1,NB minimus MR10,617.8,0
 2,old Asics,103.5,0
 3,NB MR738,80,0
 4,Asics gel-hyperspeed 5,426.7,0
@@ -19,7 +20,7 @@ id,name,km_12_13,owned
 18,Mizuno Hitogami 2,0,1
 19,Asics gel-hyperspeed 6,0,1
 20,Puma FAAS 500v4,0,0
-21,Salomon Sense Link,0,1
+21,Salomon Sense Link,0,0
 22,Inov8 Trailroc 245,0,1
 23,Inov8 x-talon 190,0,1
 24,Inov8 Terraclaw 220,0,1

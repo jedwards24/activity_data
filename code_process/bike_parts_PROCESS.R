@@ -1,5 +1,6 @@
 # Process bike part maintenance to get distance used per part since
 # last clean/repair/replace.
+# Called from MASTER.R
 
 library(tidyverse)
 library(edwards)
@@ -43,4 +44,5 @@ events_full <- events %>%
 
 if(save_flag){
   saveRDS(events_full, "data_processed/bike_parts.RDS")
+  cli::cli_alert_success("Saved data_processed/bike_parts.RDS")
 }
