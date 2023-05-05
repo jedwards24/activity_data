@@ -136,6 +136,7 @@ check_data <- function(dt) {
 # The range of dates in output runs from `start_date` to `end_date`.
 ###############
 total_by_day <- function(log, start_date, end_date) {
+  check_dates(log, start_date, end_date)
   log %>%
     filter(type %in% c("B", "R", "F")) %>%
     select(date, type, time, distance, ascent) %>%
@@ -147,6 +148,17 @@ total_by_day <- function(log, start_date, end_date) {
     complete(date = seq.Date(start_date, end_date, by = "days"),
              type = c("B", "F", "R"),
              fill = list(time = 0, distance = 0, ascent = 0, n = 0))
+}
+
+# Checks if all dates in `data$date` are between `start_date` and `end_date` (inclusive).
+# Errors if not.
+check_dates <- function(data, start_date, end_date) {
+  if (any(data$date < start_date)){
+    stop("There are entries before the start date of ", start_date, call. = FALSE)
+  }
+  if (any(data$date > end_date)){
+    stop("There are entries after the end date of ", end_date, call. = FALSE)
+  }
 }
 
 # Adds rows for "new" and "now" events to a table of bike maintenance `events`.

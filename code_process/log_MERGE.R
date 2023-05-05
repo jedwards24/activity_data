@@ -8,6 +8,11 @@ log18 <- readRDS("data_processed/log_2018.RDS")
 log20 <- readRDS("data_processed/log_2020.RDS")
 log22 <- readRDS("data_processed/log_2022.RDS")
 
+check_dates(log13, ymd("2013-07-01"), ymd("2017-12-31"))
+check_dates(log18, ymd("2018-01-01"), ymd("2019-12-31"))
+check_dates(log20, ymd("2020-01-01"), ymd("2021-12-31"))
+check_dates(log22, ymd("2022-01-01"), today())
+
 # Combine dfs using only columns common to all. The older df uses "notes" for the activity name
 keep_cols <- setdiff(names(log13), c("week_data", "notes")) %>%
   c("description")
