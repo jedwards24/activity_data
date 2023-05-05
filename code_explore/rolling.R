@@ -1,5 +1,4 @@
-# Experimenting with rolling averages. 
-# Trying tsibble packages.
+# Experimenting with rolling averages.
 library(tidyverse)
 library(tsibble)
 library(lubridate)
@@ -7,63 +6,89 @@ library(slider)
 theme_set(cowplot::theme_minimal_grid())
 tot <- readRDS("data_processed/totals.RDS")
 
-tot %>% 
-  filter(type == "R") %>% 
-  select(date, time) %>% 
-  mutate(cum = cumsum(time))
-  group_by(date) %>% 
-  summarise(cum = cumsum(time))
+edwards::count_nas(tot)
 
-count_nas(tot)
-tsb <- tot %>% 
-  filter(type %in% c("B", "R", "F")) %>% 
-  as_tsibble(index = date, key = type) %>% 
-#  arrange(date) %>% 
+# Prepare tsibble ------------
+# This also adds aerobic "points" which is a weighted measure
+# across R,B,F with limit contribution for long activities
+
+# Retain types
+tsb <- tot %>%
+  mutate(aer = ifelse(
+    type == "R",
+    pmin(time / 60, 2),
+    pmin(time / 120, 2)
+  )) %>%
+  as_tsibble(index = date, key = type) %>%
   mutate(hrs = time / 60)
 
-tsb2 <- tot %>%
-  filter(lubridate::year(date) >= 2018) %>% 
-  filter(type %in% c("B", "R", "F")) %>% 
-  as_tsibble(index = date, key = type) %>% 
-  #  arrange(date) %>% 
-  mutate(hrs = time / 60)
+# This sums across types
+tsb_sum <- tsb %>%
+  as_tibble() %>%
+  group_by(date) %>%
+  summarise(n = sum(n),
+            hrs = sum(hrs),
+            ascent = sum(ascent),
+            distance = sum(distance),
+            aer = pmin(sum(aer), 2)) %>%
+  as_tsibble(index = date)
 
-tt <- tsb2 %>% 
-#  group_by_key() %>% 
+tt <- tsb %>%
+  filter(year(date) >= 2020) %>%
   mutate(time_ma = slide_dbl(hrs, mean, .before = 42))
 
-tt %>% 
+tt %>%
   ggplot(aes(x = date, y = time_ma, color = type)) +
   geom_line()
 
-tt %>% 
+tt %>%
   ggplot(aes(x = date, y = time_ma)) +
   geom_line() +
   facet_wrap(~type)
 
-tt %>% 
-  as_tibble() %>% 
-  filter(type == "B") %>% 
-  slice_max(time_ma, n = 30) %>% 
+tt %>%
+  as_tibble() %>%
+  filter(type == "B") %>%
+  slice_max(time_ma, n = 30) %>%
   print(n = Inf)
 
-# overlay years bike
+# weeks -------
+week_hrs <- tsb %>%
+  filter(lubridate::year(date) >= 2022) %>%
+  group_by_key() %>%
+  index_by(yrwk = yearweek(date)) %>%
+  summarise(week_hrs = sum(hrs), .groups = "drop")
+
+ggplot(week_hrs, aes(x = yrwk, y = week_hrs, fill = type)) +
+  geom_col()
+
+# months ---------------
+month_hrs <- tsb %>%
+  filter(year(date) >= 2018) %>%
+  group_by_key() %>%
+  index_by(yrmn = yearmonth(date)) %>%
+  summarise(month_hrs = sum(hrs), .groups = "drop")
+
+ggplot(month_hrs, aes(x = yrmn, y = month_hrs, fill = type)) +
+  geom_col()
+
+# overlay years bike -------------
 bike <- tot %>%
-  filter(lubridate::year(date) >= 2018) %>% 
-  mutate(year = factor(lubridate::year(date))) %>% 
-  filter(type %in% c("B")) %>% 
+  filter(lubridate::year(date) >= 2018) %>%
+  mutate(year = factor(year(date))) %>%
+  filter(type %in% c("B")) %>%
   as_tsibble(index = date) %>%
   mutate(hrs = time / 60) %>%
-  mutate(hrs_ma = slide_dbl(hrs, mean, .before = 42)) %>% 
-  mutate(dist_ma = slide_dbl(distance, mean, .before = 42)) %>% 
-  as_tibble() %>% 
-  mutate(week = as.numeric(date - floor_date(date, unit = "years")) / 7) 
+  mutate(hrs_ma = slide_dbl(hrs, mean, .before = 42)) %>%
+  mutate(dist_ma = slide_dbl(distance, mean, .before = 42)) %>%
+  as_tibble() %>%
+  mutate(week = as.numeric(date - floor_date(date, unit = "years")) / 7)
 
-bike %>% 
+bike %>%
   ggplot(aes(x = week, y = hrs_ma, color = year)) +
   geom_line(size = 1)
 
-bike %>% 
+bike %>%
   ggplot(aes(x = week, y = dist_ma, color = year)) +
   geom_line(size = 1)
 
@@ -71,10 +96,10 @@ ggplot(bike, aes(x = hrs_ma, dist_ma)) +
   geom_point()
 
 # plot B MA against R MA
-rb <- tt %>% 
+rb <- tt %>%
   filter(!is.na(time_ma), type != "F") %>%
-  select(type, date, time_ma) %>% 
-  pivot_wider(names_from = type, values_from = time_ma) %>% 
+  select(type, date, time_ma) %>%
+  pivot_wider(names_from = type, values_from = time_ma) %>%
   mutate(year = factor(year(date), ordered = TRUE))
 
 ggplot(rb, aes(x = B, y = R)) +
@@ -83,138 +108,45 @@ ggplot(rb, aes(x = B, y = R)) +
 
 cor(rb$R, rb$B)
 
-# weeks -------
-# may be simpler with tile()
-twk <- tsb %>% 
-  mutate(yrwk = yearweek(date)) %>% 
-  filter(type %in% c("B", "R")) %>% 
-  filter(lubridate::year(date) >= 2018) %>% 
-  nest(data = c(-type, -yrwk))
-
-week_hrs <- twk %>%
-  group_by(type) %>% 
-  mutate(week_hrs = slide_dbl(data, 
-                                ~ sum(.$hrs), .size = 1, .align = "center", .bind = TRUE
-  ))
-
-ggplot(week_hrs, aes(x = yrwk, y = week_hrs, fill = type)) +
-  geom_col()
-week_hrs %>% arrange(desc(week_hrs))
-
-# months ---------------
-tmn <- tsb %>% 
-  mutate(yrmn = yearmonth(date)) %>% 
-  filter(type %in% c("B", "R")) %>% 
-#  filter(lubridate::year(date) >= 2018) %>% 
-  nest(data = c(-type, -yrmn))
-
-month_hrs <- tmn %>%
-  group_by(type) %>% 
-  mutate(month_hrs = slide_dbl(data, 
-                              ~ sum(.$hrs), .size = 1, .align = "center", .bind = TRUE
-  ))
-
-ggplot(month_hrs, aes(x = yrmn, y = month_hrs, fill = type)) +
-  geom_col()
-
 # aerobic "points" -------------
 # A weighted measure across R,B,F with limit contribution for long activities
 
-# first with totals: 
-tsb <- tot %>%
-  filter(type %in% c("B", "R", "F")) %>% 
-  mutate(aer = ifelse(
-    type == "R", 
-    time / 60,
-    time / 120
-  )) %>% 
-  group_by(date) %>% 
-  summarise(aer = pmin(sum(aer), 2)) %>% 
-  as_tsibble(index = date)
-  
-tt <- tsb %>% 
-  mutate(time_ma = slide_dbl(aer, mean, .size = 42))
+# first with totals:
+aer_ma <- tsb_sum %>%
+  filter(year(date) >=2016) %>%
+  mutate(aer_ma = slide_dbl(aer, mean, .before = 42))
 
-ggplot(tt, aes(x = date, y = time_ma)) +
+ggplot(aer_ma, aes(x = date, y = aer_ma)) +
   geom_line() +
   geom_hline(yintercept = mean(tt$aer), lty = 2, alpha = 0.5)
-mean(tt$aer)
-
-# Load activity data
-log_all <- readRDS("data_processed/log_all.RDS")
-
-tsb <- log_all %>%
-  filter(type %in% c("B", "R", "F")) %>% 
-#  filter(type %in% c("B", "R")) %>% 
-  mutate(aer = ifelse(
-    type == "R", 
-    pmin(time / 60, 2),
-    pmin(time / 120, 2)
-  )) %>% 
-  group_by(date) %>% 
-  summarise(aer = sum(aer)) %>% 
-  as_tsibble(index = date)  %>% 
-  fill_gaps(aer = 0L, .full = TRUE)
-
-tt <- tsb %>% 
-  mutate(time_ma = slide_dbl(aer, mean, .size = 42))
-
-ggplot(tt, aes(x = date, y = time_ma)) +
-  geom_line()
-
-ggplot(tsb, aes(x = date, y = aer)) +
-  geom_line()
 
 # By type
-tsb2 <- log_all %>%
-  filter(type %in% c("B", "R", "F")) %>% 
-  mutate(aer = ifelse(
-    type == "R", 
-    pmin(time / 60, 1),
-    pmin(time / 120, 1)
-  )) %>% 
-  group_by(date, type) %>% 
-  summarise(aer = sum(aer)) %>% 
-  ungroup() %>% 
-  as_tsibble(index = date, key = type) %>% 
-  fill_gaps(aer = 0L, .full = TRUE) %>% 
-  replace_na(list(aer = 0))
+aer_ma2 <- tsb %>%
+  group_by_key() %>%
+  mutate(aer_ma = slide_dbl(aer, mean, .before = 42))
 
-tt2 <- tsb2 %>% 
-  group_by_key() %>% 
-  mutate(aer_ma = slide_dbl(aer, mean, .size = 42))
-
-tt2 %>% 
-  filter(year(date) > 2018) %>% 
+aer_ma2 %>%
+  filter(year(date) > 2015) %>%
   ggplot(aes(x = date, y = aer_ma, color = type)) +
   geom_line()
 
-tt2 %>% 
-  filter(year(date) > 2015) %>% 
-  filter(type == "B") %>% 
-  ggplot(aes(x = date, y = aer_ma, color = type)) +
+# Combined
+tsb_sum %>%
+  as_tibble() %>%
+  mutate(type = "All") %>%
+  bind_rows(as_tibble(tsb)) %>%
+  filter(year(date) >= 2020) %>%
+  group_by(type) %>%
+  mutate(aer_ma = slide_dbl(aer, mean, .before = 42)) %>%
+  ggplot(aes(x = date, y = aer_ma, group = type, colour = type)) +
   geom_line()
-
-tail(tt)
-tail(tt2)
-tt2 %>% filter(date > as.Date("2019-12-20"))
-tail(tsb)
-tail(tsb2)
-has_gaps(tsb2)
 
 # aer by year/month & type
-tmn2 <- tsb2 %>% 
-  mutate(yrmn = yearmonth(date)) %>% 
-  filter(type %in% c("B", "R")) %>% 
-  #  filter(lubridate::year(date) >= 2018) %>% 
-  nest(data = c(-type, -yrmn))
-
-month_aer <- tmn2 %>%
-  group_by(type) %>% 
-  mutate(month_aer = slide_dbl(data, 
-                               ~ mean(.$aer), .size = 1, .align = "center", .bind = TRUE
-  ))
+month_aer <- aer2 %>%
+  filter(year(date) >= 2018) %>%
+  group_by_key() %>%
+  index_by(yrmn = yearmonth(date)) %>%
+  summarise(month_aer = sum(aer), .groups = "drop")
 
 ggplot(month_aer, aes(x = yrmn, y = month_aer, fill = type)) +
   geom_col()
-

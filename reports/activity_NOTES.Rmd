@@ -10,6 +10,7 @@ library(edwards)
 library(knitr)
 library(kableExtra)
 ```
+
 The purpose of this project is to load, process, and do analyses on my activity record data.
 
 ## Raw Data Overview
@@ -42,10 +43,44 @@ I did the 2013 log processing a while ago. I would probably do some things diffe
 
 The 2018 and 2020 logs are simpler to process and have the same output files except for no `...clean.RDS`. Each file is saved to the `data_processed` folder.
 
-Each of the `...totals.RDS` files has the same structure and in `code_process/log_MERGE.R` they are combined to a single file then saved as `data_processed/totals.RDS`. The log activity files have also been combined and saved as `data_processed/log_all.RDS` but only columns common to each dataset are kept.  
+Each of the `...totals.RDS` files has the same structure. In `code_process/log_MERGE.R` they are combined to a single file then saved as `data_processed/totals.RDS`. The log activity files have also been combined and saved as `data_processed/log_all.RDS` but only columns common to each dataset are kept.  
 
 ## Log Data Structure
 
 The `totals` data frame has five columns: `type`, `date`, `time`, `distance`, and `ascent`. The `type` is either "R", "B", or "F" (run, bike, foot) and there is one row for each `date` and `type`. I have excluded other activity types from these summaries for now since they are rare, but this will need sorting at some point. The last three columns are total time in minutes, distance in km, and ascent in metres for that activity type, for that day. There is always an entry for each type on each day (zero if no activity took place), up to the date on which the latest data was processed. 
 
 The `log_all.RDS` dataframe has the following columns: `date`, `type`, `subtype`, `time`, `distance`, `ascent`, `name`, `total_time`, and `week_data`. The column `week_data` is `FALSE` for all activities outside the 2013 datasheet.
+
+## Methodology Notes
+
+In `rolling.R` I experimented with various methods of calculating rolling averages. For this I used tsibble and slider. Later, I realised that I did not need to use tsibble. Possible advantages are that they are stricter than tibbles (duplicate date checking and automatic sorting). Filling in missing dates is a bit simpler than using `tidyr::complete` but I used this anyway so I could control the expected date range.
+
+Here is some code to summarise by weeks from a tsibble using slider that was more easily done with standard group and summarise methods.
+
+```
+week_hrs <- tsb %>%
+  mutate(yrwk = yearweek(date)) %>%
+  filter(lubridate::year(date) >= 2022) %>%
+  nest(data = c(-type, -yrwk)) %>% 
+  group_by(type) %>%
+  mutate(week_hrs = slide_dbl(data, ~sum(.x$hrs), .align = "center", .bind = TRUE))
+```
+
+This can be done directly from the totals data without slider or tsibble:
+
+```
+week_hrs <- tot %>%
+  mutate(yrwk = yearweek(date)) %>%
+  mutate(hrs = time / 60) %>%
+  group_by(yrwk, type) %>%
+  summarise(week_hrs = sum(hrs), .groups = "drop")
+```
+
+The tsibble method is similar but uses `group_by_key()` and `index_by()`:
+
+```
+week_hrs <- tsb %>%
+  group_by_key() %>%
+  index_by(yrwk = yearweek(date)) %>%
+  summarise(week_hrs = sum(hrs), .groups = "drop")
+```
