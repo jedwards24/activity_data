@@ -147,7 +147,13 @@ total_by_day <- function(log, start_date, end_date) {
     arrange(date) %>%
     complete(date = seq.Date(start_date, end_date, by = "days"),
              type = c("B", "F", "R"),
-             fill = list(time = 0, distance = 0, ascent = 0, n = 0))
+             fill = list(time = 0, distance = 0, ascent = 0, n = 0)) %>%
+    mutate(aer = ifelse(
+      type == "R",
+      pmin(time / 60, 1),
+      pmin(time / 120, 1)
+    )) %>%
+    mutate(hours = time / 60)
 }
 
 # Checks if all dates in `data$date` are between `start_date` and `end_date` (inclusive).
@@ -282,4 +288,95 @@ last_complete_week <- function(x, today_complete = TRUE) {
   if (today_complete) x <- x + 1
   start <- x - wday(x, week_start = 1) - 6
   return(seq(start, start + 6, by = "day"))
+}
+
+# Plot moving averages from totals data.
+# A line is given for each exercise type given in `types`. Optionally total lines
+# can be added using the `totals` argument, with key names `total_names`.
+# `var` is the metric to use for the moving averages (time, distance, ascent, hours, aer, n).
+# The year range is inclusive.
+# `window` is the number of days to average.
+# `totals` is a character vector.
+# `types` is a length 1 character vector.
+# The elements of `totals` and `types` take the same form giving the types to total or plot
+# e.g. "frb" is all three type, "fr" is just foot and running. Torder/case of letters
+# does not matter.
+plot_ma <- function(dat, var, min_year = -Inf, max_year = Inf, window = 42,
+                    totals = NA, totals_names = "All", types = "frb") {
+  y_name <- str_to_title(names(select(dat, {{ var }})))
+  dat <- rename(dat, metric = {{ var }})
+  if (!is.na(totals)){
+    stopifnot(length(totals) == length(totals_names))
+    totals <- str_split(str_to_upper(totals), "")
+    for (i in seq_along(totals)){
+      dat <- bind_rows(dat,
+                       ma_totals(dat,
+                                 window = window,
+                                 total_types = totals[[i]],
+                                 total_name = totals_names[[i]]))
+    }
+  }
+  types <- c(str_to_upper(str_split_1(types, "")), totals_names)
+  dat %>%
+    filter(type %in% types) %>%
+    group_by(type) %>%
+    mutate(ma = slide_dbl(metric, mean, .before = window)) %>%
+    ungroup() %>%
+    filter(between(year(date), min_year, max_year)) %>%
+    ggplot(aes(x = date, y = ma, color = type, group = type)) +
+    geom_line() +
+    ylab(y_name)
+}
+
+# Returns a totals data frame with the metric `var` summed over all types given by
+# `total_types`.
+# `total_types` should be length one in form "frb", "fb" (order/case of letters does not matter).
+ma_totals <- function(dat, window, total_types, total_name) {
+  dat %>%
+    filter(type %in% total_types) %>%
+    group_by(date) %>%
+    summarise(metric = sum(metric), .groups = "drop") %>%
+    mutate(type = total_name) %>%
+    mutate(ma = slide_dbl(metric, mean, .before = window))
+}
+
+# Simpler version of plot_ma() which plots a single line.
+# This can be done by plot_ma() but this uses fewer arguments.
+# QUESTIONING
+# The single moving average sums over types given in `types` (could be a single type).
+plot_ma_single <- function(dat, var, min_year = -Inf, max_year = Inf, window = 42,
+                           types = "frb") {
+  total_name = types
+  types <- str_to_upper(str_split_1(types, ""))
+  y_name <- names(select(dat, {{ var }}))
+  dat %>%
+    rename(metric = {{ var }}) %>%
+    ma_totals(window = window, total_types = types, total_name = total_name) %>%
+    filter(between(year(date), min_year, max_year)) %>%
+    ggplot(aes(x = date, y = ma)) +
+    geom_line() +
+    ylab(y_name)
+}
+
+# Plots a stacked bar chart of totals by time period and type.
+# `var` is the metric to use for the moving averages (time, distance, ascent, hours, aer, n).
+# The year range is inclusive.
+# `window` is the number of days to average.
+# `period` is time period to split data into.
+# `week_start` is passed to floor_date() if period = "week".
+plot_by_period <- function(dat, var, min_year = -Inf, max_year = Inf, window = 42,
+                           period = c("week", "month", "year"),
+                           week_start = 1) {
+  y_name <- names(select(dat, {{ var }}))
+  period <- rlang::arg_match(period)
+  dat %>%
+    rename(metric = {{ var }}) %>%
+    mutate(date_unit = floor_date(date, unit = period, week_start = 1)) %>%
+    group_by(date_unit, type) %>%
+    summarise(metric = sum(metric), .groups = "drop") %>%
+    filter(between(year(date_unit), min_year, max_year)) %>%
+    ggplot(aes(x = date_unit, y = metric, fill = type)) +
+    geom_col() +
+    ylab(str_to_title(y_name)) +
+    xlab(str_to_title(period))
 }

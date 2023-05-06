@@ -11,8 +11,5 @@ Write Rmd on basic data structure (pre and post-processing)
 Add checks on bike parts processing
 Review bike part processing
 
-For rolling, I could have a single tsibble with an "All" type in addition to other types.
-Have a function `add_type_total()` which add this (option to have any other combinations of type
-and different all_type level name).
-Then add all MAs to the data for each metric.
-Filter at plotting stage (plotting function? types, min_date, max_date)
+Add CTL and ATL
+
