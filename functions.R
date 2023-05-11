@@ -325,7 +325,7 @@ plot_ma <- function(dat, var, min_year = -Inf, max_year = Inf, window = 42,
     filter(between(year(date), min_year, max_year)) %>%
     ggplot(aes(x = date, y = ma, color = type, group = type)) +
     geom_line() +
-    ylab(y_name)
+    ylab(str_to_title(y_name))
 }
 
 # Returns a totals data frame with the metric `var` summed over all types given by
@@ -355,7 +355,7 @@ plot_ma_single <- function(dat, var, min_year = -Inf, max_year = Inf, window = 4
     filter(between(year(date), min_year, max_year)) %>%
     ggplot(aes(x = date, y = ma)) +
     geom_line() +
-    ylab(y_name)
+    ylab(str_to_title(y_name))
 }
 
 # Plots a stacked bar chart of totals by time period and type.
@@ -379,4 +379,76 @@ plot_by_period <- function(dat, var, min_year = -Inf, max_year = Inf, window = 4
     geom_col() +
     ylab(str_to_title(y_name)) +
     xlab(str_to_title(period))
+}
+
+# Exponentially smooth `x` using parameter `k`
+# So previous value is weighted with exp(-1/k) and
+# current observation with 1 - exp(-1/k)
+exp_smooth <- function(x, k) {
+  if (length(x) < 2) return(x)
+  aa <- exp(-1/k)
+  y <- numeric(length(x))
+  y[1] <- x[1]
+  for (i in 2:length(x)){
+    y[i] <- y[i - 1] * aa + x[i] * (1 - aa)
+  }
+  y
+}
+
+# Chronic training load from a vector `x`
+ctl <- function(x) {
+  tail(exp_smooth(x, 42), 1)
+}
+
+# Acute training load from a vector `x`
+atl <- function(x) {
+  tail(exp_smooth(x, 7), 1)
+}
+
+# Line plot of ATL and CTL for a single metric and totalled over chosen types.
+plot_tl <- function(dat, var, min_year = -Inf, max_year = Inf, types = "frb") {
+  types <- str_to_upper(str_split_1(types, ""))
+  y_name <- names(select(dat, {{ var }}))
+  dat %>%
+    rename(metric = {{ var }}) %>%
+    filter(type %in% types) %>%
+    group_by(date) %>%
+    summarise(metric = sum(metric)) %>%
+    mutate(ctl = exp_smooth(metric, 42), atl = exp_smooth(metric, 7)) %>%
+    pivot_longer(c(ctl, atl)) %>%
+    filter(between(year(date), min_year, max_year)) %>%
+    ggplot(aes(x = date, y = value, group = name, color = name)) +
+    geom_line() +
+    ylab(paste(str_to_title(y_name), "TL")) +
+    xlab("Date")
+}
+
+# Summarises in a table training loads for all metrics totalled over chosen types.
+tl_total <- function(dat, types = "frb", type_name = "All", weekly = TRUE) {
+  types <- str_to_upper(str_split_1(types, ""))
+  tbl <- dat %>%
+    group_by(date) %>%
+    summarise(across(-type, sum)) %>%
+    summarise(across(c(n, hours, distance, ascent, aer), list(ctl = ctl, atl = atl)))
+  pivot_longer(tbl, everything(), names_to = "col") %>%
+    separate_wider_delim(col, "_", names = c("metric", "load_measure")) %>%
+    {if (weekly) mutate(., value = value * 7) else .} %>%
+    pivot_wider(id_cols = metric, names_from = load_measure, values_from = value) %>%
+    mutate(tsb = (ctl - atl) / ctl) %>%
+    mutate(type = type_name, .before = 1)
+}
+
+# Summarises in a table training loads for all metrics split by chosen types.
+# If `weekly = TRUE` (default) then loads multiplied by 7 (still calculated daily).
+tl_type <- function(dat, types = "frb", weekly = TRUE) {
+  types <- str_to_upper(str_split_1(types, ""))
+  tbl <- dat %>%
+    filter(type %in% types) %>%
+    group_by(type) %>%
+    summarise(across(c(n, hours, distance, ascent, aer), list(ctl = ctl, atl = atl)))
+  pivot_longer(tbl, -type, names_to = "col") %>%
+    separate_wider_delim(col, "_", names = c("metric", "load_measure")) %>%
+    {if (weekly) mutate(., value = value * 7) else .} %>%
+    pivot_wider(id_cols = c(type, metric), names_from = load_measure, values_from = value) %>%
+    mutate(tsb = (ctl - atl) / ctl)
 }

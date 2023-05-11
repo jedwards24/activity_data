@@ -11,6 +11,7 @@ library(edwards)
 library(knitr)
 library(kableExtra)
 source("../functions.R")
+theme_set(cowplot::theme_minimal_grid())
 ```
 
 ```{r dates}

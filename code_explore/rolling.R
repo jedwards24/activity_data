@@ -4,8 +4,24 @@ library(tidyverse)
 library(tsibble)
 library(lubridate)
 library(slider)
+source("functions.R")
 theme_set(cowplot::theme_minimal_grid())
 tot <- readRDS("data_processed/totals.RDS")
+
+# Plotting function examples ---------
+plot_ma(tot, hours, 2020)
+plot_ma(tot, ascent, 2020)
+plot_ma(tot, distance, 2020)
+plot_ma(tot, distance, min_year = 2020, total = "fr", totals_names = "Foot")
+plot_ma(tot, hours, min_year = 2020, total = "frb", totals_names = "All")
+plot_ma(tot, hours, min_year = 2020, total = "frb", totals_names = "All", types = "")
+plot_ma_single(tot, hours, min_year = 2020, types = "frb")
+plot_ma_single(tot, distance, min_year = 2020, types = "b")
+
+plot_ma(tot, aer, 2020, totals = "frb")
+plot_by_period(tot, aer, 2016, period = "month")
+plot_by_period(tot, distance, 2020, period = "month")
+plot_by_period(tot, hours, 2022, period = "week")
 
 # Prepare tsibble ------------
 
@@ -59,4 +75,3 @@ ggplot(rb, aes(x = B, y = R)) +
   geom_smooth(method = lm, se = FALSE)
 
 cor(rb$R, rb$B)
-
