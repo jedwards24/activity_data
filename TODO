@@ -1,17 +1,7 @@
-TO DO
------
-Process files & git or ignore:
-
-- Redo NOTES.Rmd
-- preprocess_EXPLORE
+# TO DO
 
 News file?
 Reports on previous years
 Write Rmd on basic data structure (pre and post-processing)
 Add checks on bike parts processing
 Review bike part processing
-
-Update recent_summary.Rmd
-- Add CTL and ATL tables and plots
-- Add moving average plots
-- Tidy and structure

@@ -11,6 +11,7 @@ source("functions.R")
 
 log_all <- readRDS("data_processed/log_all.RDS")
 totals <- readRDS("data_processed/totals.RDS")
+parts <- readRDS("data_processed/bike_parts.RDS")
 
 count(log_all, week_data)
 # names(log_all) <- str_to_lower(names(log_all))
@@ -35,8 +36,8 @@ log_all %>%
 
 #Annual volume
 volume <- log_all %>%
-  filter(type %in% c("R", "B")) %>%
-  filter(year(date) <= 2019, year(date) > 2013) %>%
+  filter(type %in% c("R", "B", "F")) %>%
+  filter(year(date) <= 2022, year(date) > 2013) %>%
   group_by(type, year = as.factor(year(date))) %>%
   summarise(distance = sum(distance),
             time = sum(time) / 60,
@@ -107,7 +108,7 @@ db <- log_all %>%
   mutate(year = year(date)) %>%
   filter(type == "B",
          week_data == 0,
-         year %in% c(2013:2020)) %>%
+         year %in% c(2013:2022)) %>%
   select(-week_data) %>%
   mutate(kph_moving = distance / time * 60) %>%
   mutate(kph_all = distance / total_time * 60) %>%
@@ -192,12 +193,15 @@ log_all %>% filter(type == "R") %>%
   count()
 
 mostest(log_all, "R", "time")
+mostest(log_all, "R", "distance")
+mostest(log_all, "R", "ascent")
+
+mostest(log_all, c("R", "F"), "time", 2023, 2023)
 
 n_over(log_all, "B", "distance", 60)
 n_over(log_all, "B", "time", 90)
 n_over(log_all, "R", "ascent", 500)
 n_over(log_all, "B", "ascent", 500)
-
 
 # counts per year by threshold
 log_all
@@ -213,6 +217,15 @@ eddington(totals, "R")
 
 count(workouts, type)
 count(workouts, quality)
+
+# cdf over threshold
+dt %>%
+  filter(type == "B") %>%
+  count(distance) %>%
+  arrange(desc(distance)) %>%
+  mutate(n_over = cumsum(n)) %>%
+  ggplot(aes(distance, n_over)) +
+  geom_line()
 
 # weekly totals -----------
 dfw <- log_all %>%
@@ -482,3 +495,29 @@ fr2 %>%
   filter(year(date) == 2021, time > 40)
 fr2 %>%
   filter(time > 90, climb_rate > 35, climb_rate < 45)
+
+# bike parts ---------
+events_full %>%
+  filter(bike == "cube") %>%
+  prinf()
+
+events_full %>%
+  filter(bike == "scott") %>%
+  prinf()
+count(events_full, bike)
+# shoes------------
+shoes <- ungroup(shoes)
+count(shoes, id, name) %>% prinf()
+count(log_all, subtype)
+log_all %>%
+  filter(subtype %in% c("", "0")) %>%
+  count(subtype, type)
+
+shoes %>%
+  filter(year == 2023) %>%
+  filter(owned) %>%
+  group_by(id, name) %>%
+  summarise(dist_run = sum(distance * (type %in% "R")),
+            dist_walk = sum(distance * (type %in% "F")),
+            dist_all = sum(distance * (type %in% c("F", "R")))) %>%
+  arrange(desc(dist_all))

@@ -28,6 +28,10 @@ dt <- readRDS("../data_processed/log_all.RDS") %>%
   mutate(week = floor_date(date, unit = "weeks", week_start = 1))
 ```
 
+```{r totals}
+totals <- readRDS("../data_processed/totals.RDS")
+```
+
 ```{r week_totals}
 week_totals <- group_by(dt, week, type) %>% 
   summarise(across(c(time, distance, ascent), sum)) %>% 
@@ -51,6 +55,8 @@ I did `r nrow(dt)` activities.
 count(dt, type) %>% 
   my_kable()
 ```
+
+# Hours by Week
 
 ```{r hours1}
 tot_hrs %>% 
@@ -76,7 +82,7 @@ tot_hrs %>%
   labs(x = "Week", y = "Hours", title = "Activity Time by Type")
 ```
 
-```{r hours4}
+```{r hours4, include = FALSE}
 tot_hrs %>% 
   group_by(week) %>% 
   summarise(hours = sum(hours)) %>% 
@@ -85,6 +91,8 @@ tot_hrs %>%
   geom_label(aes(label = round(hours, 1))) +
   labs(x = "Week", y = "Hours", title = "Total Activity Time")
 ```
+
+# Distance and Ascent
 
 ```{r distance}
 week_totals %>% 
@@ -103,4 +111,14 @@ week_totals %>%
   ggplot(aes(week, value, group = type, fill = type)) +
   geom_col() +
   labs(x = "Week", y = "Ascent (m)", title = "Ascent by Type")
+```
+
+# Training Load
+
+These show 2023 only, up to `r max(totals$date)`.
+
+```{r tl}
+plot_tl(totals, hours, 2023, types = "frb")
+plot_tl(totals, ascent, 2023, types = "frb")
+plot_tl(totals, aer, 2023, types = "frb")
 ```

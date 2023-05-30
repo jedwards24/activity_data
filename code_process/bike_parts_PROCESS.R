@@ -15,15 +15,15 @@ dt2 <- readRDS("data_processed/log_2020.RDS") %>%
   bind_rows(readRDS("data_processed/log_2022.RDS")) %>%
   filter(type == "B", ave_power > 0)
 
-new_dates <- tibble(bike = c("cgr", "cube", "4iiii"),
-       date = c(ymd("2017-11-29"), ymd("2019-11-30"), ymd("2020-01-17")),
+new_dates <- tibble(bike = c("cgr", "cube", "4iiii", "scottmb"),
+       date = c(ymd("2017-11-29"), ymd("2019-11-30"), ymd("2020-01-17"), ymd("2005-01-01")),
        event = "new")
 
 standard_parts <- c("chain", "bottom bracket", "mech hanger", "rear gear cable",
                     "rear tube", "headset", "cassette", "freehub", "jockeys",
                     "front gear cable", "handlebar tape")
 
-events <- expand_events(events_load, standard_parts, new_dates, bikes = c("cgr", "cube"))
+events <- expand_events(events_load, standard_parts, new_dates, bikes = c("cgr", "cube", "scottmb"))
 
 # checks
 if (F){

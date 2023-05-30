@@ -70,9 +70,10 @@ eddington <- function(data, activity_type, measure = "Distance", unit_adjust = 1
 # Returns a tibble of the `n` activities of `activity_type` with the largest "measure"
 # (e.g. 5 runs/cycles with most ascent/distance/time).
 ################
-mostest <- function(data, activity_type, measure, n = 15) {
+mostest <- function(data, activity_type, measure, min_year = -Inf, max_year = Inf, n = 15) {
   data %>%
-    filter(type == activity_type) %>%
+    filter(year(date) >= min_year, year(date) <= max_year) %>%
+    filter(type %in% activity_type) %>%
     filter(week_data == 0) %>%
     select(-week_data) %>%
     top_n(n = n, wt = get(measure)) %>%
@@ -120,7 +121,7 @@ check_data <- function(dt) {
   errs <- dt %>%
     filter(type %in% c("B", "R", "F")) %>%
     filter(!week_data) %>%
-    filter(distance == 0 | (distance >= time))
+    filter(distance == 0 | (distance >= 0.5 * time))
   if (nrow(errs) == 0) {
     cli::cli_alert_success("No problems found in the data.")
     return(invisible(errs))
@@ -206,7 +207,8 @@ part_distance <- function(date1, date2, bike, data, power_data) {
            date < date2)
   subtype_filter <- case_when(
     bike == "cgr" ~ "c",
-    bike == "cube" ~ "a"
+    bike == "cube" ~ "a",
+    bike == "scottmb" ~ "m"
   )
   if(bike == "4iiii"){
     power <- power_data %>%
@@ -424,9 +426,12 @@ plot_tl <- function(dat, var, min_year = -Inf, max_year = Inf, types = "frb") {
 }
 
 # Summarises in a table training loads for all metrics totalled over chosen types.
-tl_total <- function(dat, types = "frb", type_name = "All", weekly = TRUE) {
-  types <- str_to_upper(str_split_1(types, ""))
+tl_total <- function(dat,
+                     types = "frb",
+                     total_name = str_to_upper(types),
+                     weekly = TRUE) {
   tbl <- dat %>%
+    filter(type %in% str_to_upper(str_split_1(types, ""))) %>%
     group_by(date) %>%
     summarise(across(-type, sum)) %>%
     summarise(across(c(n, hours, distance, ascent, aer), list(ctl = ctl, atl = atl)))
@@ -435,7 +440,7 @@ tl_total <- function(dat, types = "frb", type_name = "All", weekly = TRUE) {
     {if (weekly) mutate(., value = value * 7) else .} %>%
     pivot_wider(id_cols = metric, names_from = load_measure, values_from = value) %>%
     mutate(tsb = (ctl - atl) / ctl) %>%
-    mutate(type = type_name, .before = 1)
+    mutate(type = total_name, .before = 1)
 }
 
 # Summarises in a table training loads for all metrics split by chosen types.
@@ -451,4 +456,12 @@ tl_type <- function(dat, types = "frb", weekly = TRUE) {
     {if (weekly) mutate(., value = value * 7) else .} %>%
     pivot_wider(id_cols = c(type, metric), names_from = load_measure, values_from = value) %>%
     mutate(tsb = (ctl - atl) / ctl)
+}
+
+# Helper to more easily filter data between dates. The dates are given as strings "yyyy-mm-dd".
+# If a date is omitted then that end of the range is unlimited.
+filter_dates <- function(dat, start_date = NA, end_date = NA) {
+  start_date <- if (is.na(start_date)) ymd("1900-01-01") else ymd(start_date)
+  end_date <- if (is.na(end_date)) ymd("2100-01-01") else ymd(end_date)
+  filter(dat, between(date, start_date, end_date))
 }
