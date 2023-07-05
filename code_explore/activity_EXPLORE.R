@@ -46,7 +46,14 @@ volume <- log_all %>%
 
 volume %>%
   group_by(year) %>%
+  summarise_if(is.numeric, sum) %>%
+  mutate(across(-year, ~./52)) # weekly
+
+volume %>%
+  filter(type == "B") %>%
+  group_by(year) %>%
   summarise_if(is.numeric, sum)
+
 
 ggplot(volume, aes(x = year, y = distance, fill = type)) +
   geom_col(position = "dodge")
@@ -196,7 +203,9 @@ mostest(log_all, "R", "time")
 mostest(log_all, "R", "distance")
 mostest(log_all, "R", "ascent")
 
-mostest(log_all, c("R", "F"), "time", 2023, 2023)
+mostest(log_all, "fr", "time", 2022, 2023)
+mostest(log_all, "fr", "distance", 2022, 2023)
+mostest(log_all, "fr", "distance", 2022, 2023)
 
 n_over(log_all, "B", "distance", 60)
 n_over(log_all, "B", "time", 90)
@@ -497,14 +506,18 @@ fr2 %>%
   filter(time > 90, climb_rate > 35, climb_rate < 45)
 
 # bike parts ---------
-events_full %>%
+parts %>%
   filter(bike == "cube") %>%
   prinf()
 
-events_full %>%
+parts %>%
   filter(bike == "scott") %>%
   prinf()
-count(events_full, bike)
+count(parts, bike)
+parts %>%
+  filter(bike == "4iiii") %>%
+  prinf()
+
 # shoes------------
 shoes <- ungroup(shoes)
 count(shoes, id, name) %>% prinf()

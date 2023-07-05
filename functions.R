@@ -70,14 +70,15 @@ eddington <- function(data, activity_type, measure = "Distance", unit_adjust = 1
 # Returns a tibble of the `n` activities of `activity_type` with the largest "measure"
 # (e.g. 5 runs/cycles with most ascent/distance/time).
 ################
-mostest <- function(data, activity_type, measure, min_year = -Inf, max_year = Inf, n = 15) {
+mostest <- function(data, types, measure, min_year = -Inf, max_year = Inf, n = 15) {
+  types <- parse_types(types)
   data %>%
     filter(year(date) >= min_year, year(date) <= max_year) %>%
-    filter(type %in% activity_type) %>%
+    filter(type %in% types) %>%
     filter(week_data == 0) %>%
     select(-week_data) %>%
     top_n(n = n, wt = get(measure)) %>%
-    arrange(type, desc(get(measure)))
+    arrange(desc(get(measure)))
 }
 
 # Using current tidyeval
@@ -309,7 +310,7 @@ plot_ma <- function(dat, var, min_year = -Inf, max_year = Inf, window = 42,
   dat <- rename(dat, metric = {{ var }})
   if (!is.na(totals)){
     stopifnot(length(totals) == length(totals_names))
-    totals <- str_split(str_to_upper(totals), "")
+    totals <- parse_types(totals)
     for (i in seq_along(totals)){
       dat <- bind_rows(dat,
                        ma_totals(dat,
@@ -318,7 +319,7 @@ plot_ma <- function(dat, var, min_year = -Inf, max_year = Inf, window = 42,
                                  total_name = totals_names[[i]]))
     }
   }
-  types <- c(str_to_upper(str_split_1(types, "")), totals_names)
+  types <- c(parse_types(types), totals_names)
   dat %>%
     filter(type %in% types) %>%
     group_by(type) %>%
@@ -332,7 +333,7 @@ plot_ma <- function(dat, var, min_year = -Inf, max_year = Inf, window = 42,
 
 # Returns a totals data frame with the metric `var` summed over all types given by
 # `total_types`.
-# `total_types` should be length one in form "frb", "fb" (order/case of letters does not matter).
+# `total_types` should be a vector of types
 ma_totals <- function(dat, window, total_types, total_name) {
   dat %>%
     filter(type %in% total_types) %>%
@@ -349,7 +350,7 @@ ma_totals <- function(dat, window, total_types, total_name) {
 plot_ma_single <- function(dat, var, min_year = -Inf, max_year = Inf, window = 42,
                            types = "frb") {
   total_name = types
-  types <- str_to_upper(str_split_1(types, ""))
+  types <- parse_types(types)
   y_name <- names(select(dat, {{ var }}))
   dat %>%
     rename(metric = {{ var }}) %>%
@@ -409,7 +410,7 @@ atl <- function(x) {
 
 # Line plot of ATL and CTL for a single metric and totalled over chosen types.
 plot_tl <- function(dat, var, min_year = -Inf, max_year = Inf, types = "frb") {
-  types <- str_to_upper(str_split_1(types, ""))
+  types <- parse_types(types)
   y_name <- names(select(dat, {{ var }}))
   dat %>%
     rename(metric = {{ var }}) %>%
@@ -446,7 +447,7 @@ tl_total <- function(dat,
 # Summarises in a table training loads for all metrics split by chosen types.
 # If `weekly = TRUE` (default) then loads multiplied by 7 (still calculated daily).
 tl_type <- function(dat, types = "frb", weekly = TRUE) {
-  types <- str_to_upper(str_split_1(types, ""))
+  types <- parse_types(types)
   tbl <- dat %>%
     filter(type %in% types) %>%
     group_by(type) %>%
@@ -464,4 +465,9 @@ filter_dates <- function(dat, start_date = NA, end_date = NA) {
   start_date <- if (is.na(start_date)) ymd("1900-01-01") else ymd(start_date)
   end_date <- if (is.na(end_date)) ymd("2100-01-01") else ymd(end_date)
   filter(dat, between(date, start_date, end_date))
+}
+
+# Convert "frb" type inputs into c("F", "R", "B").
+parse_types <- function(x) {
+  str_to_upper(str_split_1(x, ""))
 }
