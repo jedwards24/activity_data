@@ -14,9 +14,11 @@ plot_ma(tot, ascent, 2020)
 plot_ma(tot, distance, 2020)
 plot_ma(tot, distance, min_year = 2020, total = "fr", totals_names = "Foot")
 plot_ma(tot, hours, min_year = 2020, total = "frb", totals_names = "All")
+# the next two are the same
 plot_ma(tot, hours, min_year = 2020, total = "frb", totals_names = "All", types = "")
 plot_ma_single(tot, hours, min_year = 2020, types = "frb")
 plot_ma_single(tot, distance, min_year = 2020, types = "b")
+plot_ma_single(tot, hours, min_year = 2017, types = "frb")
 
 plot_ma(tot, aer, 2020, totals = "frb")
 plot_by_period(tot, aer, 2016, period = "month")

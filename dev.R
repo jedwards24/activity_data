@@ -157,3 +157,30 @@ log %>%
   filter(norm_power > 0) %>%
   ggplot(aes(time, norm_power, colour = year)) +
   geom_point()
+
+# Frontier -------
+log <- readRDS("data_processed/log_2022.RDS")
+dtp <- log %>%
+  filter(year(date) == 2023) %>%
+#  filter(type == "R") %>%
+  filter(norm_power > 0) %>%
+#  mutate(time = time / 60) %>%
+  arrange(desc(time)) %>%
+  mutate(cum_max_np = cummax(norm_power)) %>%
+  mutate(is_max = (cum_max_np == norm_power))
+
+dtp %>%
+  filter(is_max) %>%
+  ggplot(aes(x = time, y = cum_max_np, label = description)) +
+  geom_point() +
+  ggrepel::geom_label_repel(max.overlaps = 20) +
+  geom_line(group = 1) +
+  theme_minimal() +
+  scale_x_log10() +
+  labs(x = "Time (mins)", y = "Power (W)")
+
+# table
+dtp %>%
+  filter(norm_power == cum_max_np) %>%
+  select(type, np = norm_power, time, ascent, name = description) %>%
+  prinf()
