@@ -1,5 +1,5 @@
 date,bike,category,event,part
-17/01/20,4iiii,battery,new,original
+16/01/20,4iiii,battery,new,original
 30/07/2020,4iiii,battery,replace,A
 03/04/2021,4iiii,battery,replace,B
 22/10/2021,4iiii,battery,replace,C
@@ -26,43 +26,43 @@ date,bike,category,event,part
 17/04/2022,cgr,brake pads front,replace,A
 15/11/2020,cgr,cassette,clean,
 18/03/2021,cgr,cassette,clean,
-23/03/2019,cgr,chain,replace,A
-18/03/2021,cgr,chain,replace,Shimano CN-4601
+23/03/2019,cgr,chain,replace,Shim CN-4601
+18/03/2021,cgr,chain,replace,KMC X10
 15/11/2020,cgr,freehub,clean,
-25/03/2021,cgr,front gear cable,replace,A
-25/03/2021,cgr,handlebar tape,replace,A
+25/03/2021,cgr,front gear cable,replace,Shim steel
+25/03/2021,cgr,handlebar tape,replace,Selle smootape
 15/11/2020,cgr,headset,clean,
 15/11/2020,cgr,jockeys,clean,
 18/03/2021,cgr,jockeys,clean,
 25/11/2020,cgr,mech hanger,replace,A
-11/12/2020,cgr,rear gear cable,replace,A
+11/12/2020,cgr,rear gear cable,replace,Shim steel
 15/11/2020,cgr,rear mudguard,clean,
 22/01/2021,cgr,rear tube,repair,
 22/01/2021,cgr,tyre,to rear,mplus A
 22/01/2021,cgr,tyre,to front,mplus B
-30/11/2019,cube,cassette,new,original
-30/11/2020,cube,chain,new,original
-30/11/2021,cube,jockeys,new,original
-30/11/2022,cube,rear gear cable,new,original
-30/11/2023,cube,rear tube,new,original
-30/11/2024,cube,front tube,new,original
-30/11/2025,cube,tyre,front,grandsport A
-30/11/2026,cube,tyre,rear,grandsport B
+29/11/2019,cube,cassette,new,original
+29/11/2019,cube,chain,new,original
+29/11/2019,cube,jockeys,new,original
+29/11/2019,cube,rear gear cable,new,original
+29/11/2019,cube,rear tube,new,original
+29/11/2019,cube,front tube,new,original
+29/11/2019,cube,tyre,front,grandsport A
+29/11/2019,cube,tyre,rear,grandsport B
 17/09/2021,cube,cassette,clean,
-17/09/2021,cube,chain,replace,KMC X10
-13/09/22,cube,chain,replace,CN-HG601
+17/09/2021,cube,chain,replace,KMC X11
+13/09/22,cube,chain,replace,Shim CN-HG601
 17/09/2021,cube,jockeys,clean,
-20/07/23,cube,rear gear cable,replace,Shimano steel
+20/07/23,cube,rear gear cable,replace,Shim steel
 17/09/2021,cube,rear tube,repair,
 09/10/22,cube,rear tube,replace,A
-17/09/2021,cube,tyre grandsport A,to rear,grandsport A
-02/08/23,cube,tyre grandsport A,retire,grandsport A
-17/09/2021,cube,tyre grandsport B,retire,grandsport B
-17/09/2021,cube,tyre rubino A,front,rubino A
-02/08/23,cube,tyre rubino B,rear,rubino B
+17/09/2021,cube,tyre,to rear,grandsport A
+02/08/23,cube,tyre,retire,grandsport A
+17/09/2021,cube,tyre,retire,grandsport B
+17/09/2021,cube,tyre,front,rubino A
+02/08/23,cube,tyre,rear,rubino B
 01/01/05,scottmb,cassette,new,original
 01/01/05,scottmb,chain,new,original
 01/01/05,scottmb,jockeys,new,original
 28/05/23,scottmb,cassette,clean,
-28/05/23,scottmb,chain,replace,CH-HG40
+28/05/23,scottmb,chain,replace,Shim CH-HG40
 28/05/23,scottmb,jockeys,clean,
