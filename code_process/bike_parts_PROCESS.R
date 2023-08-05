@@ -1,5 +1,4 @@
-# Process bike part maintenance to get distance used per part since
-# last clean/repair/replace.
+# Process bike part maintenance record to get summary per part.
 # Called from MASTER.R
 
 library(tidyverse)
@@ -7,42 +6,102 @@ library(edwards)
 library(lubridate)
 source("functions.R")
 
-events_load <- read_csv("data/bikes.csv", col_types = "cccc") %>%
-  mutate(date = dmy(date))
+# Load data -------------
+# event data
+ev <- read_csv("data/bike_parts.csv", col_types = "ccccc") %>%
+  mutate(date = dmy(date)) %>%
+    arrange(bike, category, date) %>%
+    fill(part)
+# Bike activity data
 dt <- readRDS("data_processed/log_all.RDS") %>%
-  filter(type == "B")
-dt2 <- readRDS("data_processed/log_2020.RDS") %>%
+  filter(type == "B") %>%
+  select(date, subtype, distance)
+# Activities with power
+dtp <- readRDS("data_processed/log_2020.RDS") %>%
   bind_rows(readRDS("data_processed/log_2022.RDS")) %>%
-  filter(type == "B", ave_power > 0)
+  filter(type == "B", ave_power > 0) %>%
+  mutate(bike = "4iiii") %>%
+  select(date, bike, distance)
+# Auxiliary data tables
+bike_tbl <- tibble(bike = c("cgr", "cube", "scottmb"), subtype = c("c", "a", "m"))
+zero <- tibble(bike = c("4iiii", "cgr", "cube", "scottmb"),
+               date = ymd("1900-01-01"),
+               km = 0)
 
-new_dates <- tibble(bike = c("cgr", "cube", "4iiii", "scottmb"),
-       date = c(ymd("2017-11-29"), ymd("2019-11-30"), ymd("2020-01-17"), ymd("2005-01-01")),
-       event = "new")
+# Process "replace"
+# Each replace event is replaced by two events (retire and new)
+new_retire <- ev %>%
+  arrange(bike, category, date) %>%
+  fill(part) %>%
+  group_by(bike, category) %>%
+  mutate(prev = lag(part)) %>%
+  filter(event == "replace") %>%
+  pivot_longer(c(prev, part), values_to = "part") %>%
+  mutate(event = ifelse(name == "part", "new", "retire")) %>%
+  select(-name)
+# Combine
+ev2 <- ev %>%
+  filter(event != "replace") %>%
+  bind_rows(new_retire) %>%
+  arrange(bike, category, date)
 
-standard_parts <- c("chain", "bottom bracket", "mech hanger", "rear gear cable",
-                    "rear tube", "headset", "cassette", "freehub", "jockeys",
-                    "front gear cable", "handlebar tape")
-
-events <- expand_events(events_load, standard_parts, new_dates, bikes = c("cgr", "cube", "scottmb"))
-
-# checks
-if (F){
-  events %>% filter(event == "new") %>% count_n(bike, part)
-  events %>% filter(event == "now") %>% count_n(bike, part)
-  events %>% filter(event == "retire") %>% count_n(bike, part)
-}
-
-events_full <- events %>%
-  group_by(bike, part) %>%
-  mutate(previous = lag(date)) %>%
-  rowwise() %>%
-  mutate(km_since_prev = part_distance(previous, date, bike, data = dt, power_data = dt2)) %>%
+# Adding distance-----------
+# Create cumulative km on original data and join by date
+dt2 <- dt %>%
+  left_join(bike_tbl, by = "subtype") %>%
+  bind_rows(dtp) %>%
+  filter(!is.na(bike)) %>%
+  group_by(subtype) %>%
+  mutate(km = cumsum(distance)) %>%
   ungroup() %>%
-  mutate(days_since_previous = diff_days(date, previous)) %>%
-  replace_na(list(days_since_previous = 0)) %>%
-  select(-previous)
+  select(-distance, -subtype)
+
+ev_dates <- ev2 %>%
+  select(date, bike) %>%
+  distinct()
+
+parts <- dt2 %>%
+  bind_rows(zero) %>%
+  bind_rows(ev_dates) %>%
+  arrange(bike, date) %>%
+  fill(km) %>%
+  distinct() %>%
+  right_join(ev2, by = c("bike", "date")) %>%
+  relocate(part, .before = event) %>%
+  arrange(bike, category, part, date) %>%
+  relocate(km, .after = last_col())
+
+# Current km/date---------
+latest <- dt2 %>%
+  group_by(bike) %>%
+  summarise(latest_date = max(date),
+            latest_km = max(km))
+
+# Nest by part-----------
+nest_parts <- parts %>%
+  nest(data = c(date, event, km)) %>%
+  mutate(active = map_lgl(data, ~!"retire" %in% .$event)) %>%
+  mutate(start_date = as_date(map_dbl(data, ~min(.$date)))) %>%
+  mutate(last_date = as_date(map_dbl(data, ~max(.$date)))) %>%
+  arrange(bike, category, start_date) %>%
+  mutate(start_km = map_dbl(data, ~min(.$km))) %>%
+  mutate(last_km = map_dbl(data, ~max(.$km))) %>%
+  left_join(latest, by = "bike") %>%
+  mutate(latest_date = if_else(active, latest_date, last_date)) %>%
+  mutate(latest_km = if_else(active, latest_km, last_km)) %>%
+  mutate(total_km = latest_km - start_km) %>%
+  mutate(total_days = diff_days(latest_date, start_date)) %>%
+  mutate(last_event = map_chr(data, ~last(.$event))) %>%
+  mutate(km_since_last = latest_km - map_dbl(data, ~last(.$km))) %>%
+  mutate(days_since_last = diff_days(latest_date, as_date(map_dbl(data, ~last(.$date))))) %>%
+  mutate(front_km = map2_dbl(data, latest_km, tyre_front_km)) %>%
+  mutate(rear_km = total_km - front_km) %>%
+  select(-latest_date, -latest_km, -start_km, -last_km) %>%
+  relocate(event_data = data, .after = last_col())
+
+attr(nest_parts, "latest_date") <- max(latest$latest_date)
 
 if(save_flag){
-  saveRDS(events_full, "data_processed/bike_parts.RDS")
+  saveRDS(nest_parts, "data_processed/bike_parts.RDS")
   cli::cli_alert_success("Saved data_processed/bike_parts.RDS")
 }

@@ -8,10 +8,7 @@ ev <- read_csv("data/bike_parts.csv", col_types = "ccccc") %>%
   mutate(date = dmy(date))
 ev %>%
   arrange(bike, category, part)
-ev %>%
-  group_by(bike, category) %>%
-  nest()
-?nest
+
 # fill down missing parts
 ev2 <- ev %>%
   arrange(bike, category, date) %>%
@@ -128,9 +125,6 @@ nestp %>%
 # Possible event patterns:
 # fr, frx, fx, f  (x = retire)
 # could calculate km on front then get rest by subtracting
-tyre <- nestp %>%
-  filter(category == "tyre") %>%
-  pull(data)
 
 nestp %>%
   filter(category == "tyre") %>%
@@ -169,7 +163,3 @@ ev3 %>%
 # Most efficient: add new rows in dt to match events dates (fill down)
 # Need an inital zero row for each bike
 
-# Checks needed:----------
-# Any replace/new/front/rear should have a part name
-# Missing values (except part)
-# Each category/part should have one of new/replace/front/rear

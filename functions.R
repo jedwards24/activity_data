@@ -471,3 +471,19 @@ filter_dates <- function(dat, start_date = NA, end_date = NA) {
 parse_types <- function(x) {
   str_to_upper(str_split_1(x, ""))
 }
+
+# Used in bike_parts_PROCESS.R
+# km that tyre has done on front.
+# data is event data table for a bike part.
+# latest_km is current bike km.
+tyre_front_km <- function(dat, latest_km) {
+  ev <- dat$event
+  if (!("front" %in% ev || "rear" %in% ev)) return(NA) # non-tyre parts
+  km <- dat$km
+  active = !"retire" %in% ev
+  last_km <- if (active) latest_km else km[ev == "retire"]
+  if ("to rear" %in% ev) return(km[ev == "to rear"] - km[ev == "front"])
+  if (identical("front", ev)) return(latest_km - km[1])
+  if ("to front" %in% ev) return(last_km - km[ev == "to front"])
+  0
+}

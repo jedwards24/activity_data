@@ -3,9 +3,19 @@
 News file?
 Reports on previous years
 Write Rmd on basic data structure (pre and post-processing)
-Add checks on bike parts processing
-Review bike part processing
 
 Power "frontier"" plots (see hill climbs project)
 - general function to do scatter plot with max y for given x <= x_i in different colour
 - Return table too?
+
+## Bike part processing
+
+Summary report
+
+Runtime tests:
+- Any replace/new/front/rear should have a part name
+- Missing values (except part)
+- Each category/part should have one of new/replace/front/rear
+- and more
+
+
