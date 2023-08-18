@@ -1,0 +1,77 @@
+---
+title: "Bike Parts"
+output: html_document
+---
+
+```{r setup, include = FALSE}
+knitr::opts_chunk$set(echo = FALSE, message = FALSE, error = FALSE, cache = FALSE)
+library(tidyverse)
+library(edwards)
+library(knitr)
+library(kableExtra)
+options(dplyr.summarise.inform = FALSE)
+```
+
+```{r parts}
+parts <- readRDS("../data_processed/bike_parts.RDS") %>% 
+  relocate(last_date, .after = last_event) %>% 
+  mutate(across(contains("km"), ~round(., 0)))
+```
+
+# Bikes 
+
+```{r bikes}
+readRDS("../data_processed/log_all.RDS") %>%
+  filter(type == "B") %>% 
+  summarise(hours = round(sum(time) / 60, 1), distance = round(sum(distance), 0),
+            earliest_date = min(date),
+            .by = subtype) %>% 
+  my_kable(caption = "Bike Summary")
+```
+
+# By Bike
+
+```{r cube}
+parts %>%
+  filter(bike == "cube") %>%
+  select(-event_data, -front_km, -rear_km, -bike) %>%
+  my_kable(caption = "Cube", col.names = snakecase::to_title_case(names(.)))
+```
+
+```{r cgr}
+parts %>%
+  filter(bike == "cgr") %>%
+  select(-event_data, -front_km, -rear_km, -bike) %>% 
+  my_kable(caption = "CGR", col.names = snakecase::to_title_case(names(.)))
+```
+
+```{r mb}
+parts %>%
+  filter(bike == "scottmb") %>%
+  select(-event_data, -front_km, -rear_km, -bike) %>% 
+  my_kable(caption = "Scott MB", col.names = snakecase::to_title_case(names(.)))
+```
+
+# Special Parts
+
+```{r tyres}
+parts %>% 
+  filter(category == "tyre") %>% 
+  select(-contains("since_last"), -category, -event_data) %>% 
+  relocate(contains("_km"), .after = start_date) %>% 
+  my_kable(caption = "Tyres", col.names = snakecase::to_title_case(names(.)))
+```
+
+```{r power}
+parts %>%
+  filter(bike == "4iiii") %>%
+  select(-event_data, -front_km, -rear_km, -bike) %>% 
+  my_kable(caption = "4iiii Power Meter", col.names = snakecase::to_title_case(names(.)))
+```
+
+```{r chains}
+parts %>% 
+  filter(category == "chain") %>% 
+  select(-contains("last"), -category, -event_data, -rear_km, -front_km) %>% 
+  my_kable(caption = "Chains", col.names = snakecase::to_title_case(names(.)))
+```

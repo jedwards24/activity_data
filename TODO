@@ -10,12 +10,12 @@ Power "frontier"" plots (see hill climbs project)
 
 ## Bike part processing
 
-Summary report
+Use bike lookup CSV?
 
 Runtime tests:
-- Any replace/new/front/rear should have a part name
-- Missing values (except part)
-- Each category/part should have one of new/replace/front/rear
-- and more
+[x] Any replace/new/front/rear should have a part name
+[x] Missing values (except part)
+[x] Each category/part should have one of new/replace/front/rear
+- more?
 
 

@@ -6,12 +6,43 @@ library(edwards)
 library(lubridate)
 source("functions.R")
 
-# Load data -------------
-# event data
+# Load data and basic checks -------------
 ev <- read_csv("data/bike_parts.csv", col_types = "ccccc") %>%
   mutate(date = dmy(date)) %>%
-    arrange(bike, category, date) %>%
-    fill(part)
+  mutate(id = row_number())
+new_events <- c("new", "replace", "front", "rear")
+
+errs1 <- ev %>%
+  filter(event %in% new_events, is.na(part)) %>%
+  pull(id)
+if (length(errs1) > 0){
+  stop("All 'new', 'replace', 'front', 'rear' events must have a part name.\n",
+       "The part name is missing in the following rows:\n", errs1)
+}
+errs2 <- count_nas(select(ev, -part))
+if (length(errs2) > 0){
+  stop("There must not be missing values in any column except 'part'.\n",
+       "The following columns contain missing values:\n", names(errs2))
+}
+
+errs3 <- ev %>%
+  filter(!is.na(part)) %>%
+  group_by(category, part) %>%
+  summarise(events = list(event), .groups = "drop") %>%
+  mutate(new = map_lgl(events, ~any(new_events %in% .))) %>%
+  filter(!new)
+if (nrow(errs3) > 0){
+  cat_parts <- mutate(errs3, cat_part = paste(category, part, sep = "-")) %>% pull(cat_part)
+  stop("Each category/part combination must contain one of 'new', 'replace', 'front', or 'rear' events.\n",
+       "The problems occurred in the following category-parts:\n", paste0(cat_parts, "\n"))
+}
+
+# Load other data ---------
+# event data
+ev <- ev %>%
+  select(-id) %>%
+  arrange(bike, category, date) %>%
+  fill(part)
 # Bike activity data
 dt <- readRDS("data_processed/log_all.RDS") %>%
   filter(type == "B") %>%
