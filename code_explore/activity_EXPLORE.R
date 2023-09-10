@@ -97,6 +97,24 @@ log_all %>%
   summarise(n = n(), km = sum(distance))
 
 log_all %>%
+  filter(type == "B") %>%
+  group_by(subtype, year = year(date)) %>%
+  summarise(n = n(), km = sum(distance)) %>%
+  prinf()
+
+log_all %>%
+  filter(type == "B") %>%
+  group_by(year = year(date), subtype) %>%
+  summarise(km = sum(distance)) %>%
+  pivot_wider(names_from = subtype, values_from = km, values_fill = 0)
+
+log_all %>%
+  filter(type == "B") %>%
+  group_by(year = year(date)) %>%
+  summarise(n = n(), km = sum(distance)) %>%
+  prinf()
+
+log_all %>%
   filter(type == "B", subtype == "(none)")
 
 # Rides in 2016/17/18 ---------------
@@ -203,6 +221,12 @@ mostest(log_all, "R", "time")
 mostest(log_all, "R", "distance")
 mostest(log_all, "R", "ascent")
 
+mostest(log_all, "b", "ascent")
+log_all %>%
+  filter(distance > 40) %>%
+  mutate(ascent_km = ascent / distance) %>%
+  mostest("b", "ascent_km")
+
 mostest(log_all, "fr", "time", 2022, 2023)
 mostest(log_all, "fr", "distance", 2022, 2023)
 mostest(log_all, "fr", "distance", 2022, 2023)
@@ -288,6 +312,12 @@ rides %>%
 rides %>%
   ggplot(aes(x = days_ago, y = time / 60, size = ascent)) +
   geom_point()
+
+# 2022----------
+dt22 <- readRDS("data_processed/log_2022.RDS")
+dt22 %>%
+  filter(time > 120) %>%
+  mostest2("B", "ave_power")
 
 # Strava-style training log ------------
 tl <- log_all %>%
@@ -511,12 +541,16 @@ parts %>%
   prinf()
 
 parts %>%
-  filter(bike == "scott") %>%
+  filter(bike == "cgr") %>%
   prinf()
+filter(parts, bike == "4iiii")
+filter(parts, bike == "scottmb")
+
 count(parts, bike)
-parts %>%
-  filter(bike == "4iiii") %>%
-  prinf()
+
+log_all %>%
+  filter(type =="B") %>%
+  count(subtype)
 
 # shoes------------
 shoes <- ungroup(shoes)

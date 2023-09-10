@@ -158,6 +158,12 @@ log %>%
   ggplot(aes(time, norm_power, colour = year)) +
   geom_point()
 
+log %>%
+  filter(type %in% c("B")) %>%
+  filter(norm_power > 0) %>%
+  ggplot(aes(time, norm_power, colour = year)) +
+  geom_point()
+
 # Frontier -------
 log <- readRDS("data_processed/log_2022.RDS")
 dtp <- log %>%

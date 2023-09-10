@@ -15,3 +15,10 @@ dt
 map_int(dt$Subtype, length)
 vcount(dt$Subtype)
 filter(dt, is.na(Subtype))
+
+# Stress & Health sheet
+dtsh <- read_sheet("1w9vNdPAB3qxqnqbToHmGBjxSSAN0-ckYuK_96oluSG8",
+                   sheet = 2, skip = 2)
+count(dtsh, `Diet quality`)
+count(dtsh, `Exercise stresses`)
+

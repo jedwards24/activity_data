@@ -19,7 +19,7 @@ if (length(errs1) > 0){
   stop("All 'new', 'replace', 'front', 'rear' events must have a part name.\n",
        "The part name is missing in the following rows:\n", errs1)
 }
-errs2 <- count_nas(select(ev, -part))
+suppressMessages(errs2 <- count_nas(select(ev, -part)))
 if (length(errs2) > 0){
   stop("There must not be missing values in any column except 'part'.\n",
        "The following columns contain missing values:\n", names(errs2))

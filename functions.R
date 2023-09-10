@@ -71,24 +71,27 @@ eddington <- function(data, activity_type, measure = "Distance", unit_adjust = 1
 # (e.g. 5 runs/cycles with most ascent/distance/time).
 ################
 mostest <- function(data, types, measure, min_year = -Inf, max_year = Inf, n = 15) {
+  if ("week_data" %in% names(data)){
+    data <- filter(data, week_data == 0) %>%
+      select(-week_data)
+  }
   types <- parse_types(types)
   data %>%
     filter(year(date) >= min_year, year(date) <= max_year) %>%
     filter(type %in% types) %>%
-    filter(week_data == 0) %>%
-    select(-week_data) %>%
     top_n(n = n, wt = get(measure)) %>%
     arrange(desc(get(measure)))
 }
 
 # Using current tidyeval
-mostest2 <- function(data, activity_type, measure, n = 15) {
+mostest2 <- function(data, types, measure, n = 15) {
   if ("week_data" %in% names(data)){
     data <- filter(data, week_data == 0) %>%
       select(-week_data)
   }
+  types <- parse_types(types)
   data %>%
-    filter(type == activity_type) %>%
+    filter(type %in% types) %>%
     top_n(n = n, wt = .data[[measure]]) %>%
     arrange(type, desc(.data[[measure]]))
 }
