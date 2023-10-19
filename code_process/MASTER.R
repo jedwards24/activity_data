@@ -1,5 +1,9 @@
 # One-stop place from which to run all data processing scripts
 
+if (!interactive()){
+  setwd("/home/james/rrr/activity_data")
+  Sys.setenv(RSTUDIO_PANDOC="/usr/lib/rstudio/resources/app/bin/quarto/bin/tools")
+}
 # Also used are readxl, glue, cli
 library(tidyverse)
 library(edwards)
