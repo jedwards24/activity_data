@@ -19,10 +19,14 @@ last_week <- last_complete_week(today())
 week_starts <- seq(last_week[1] - 77, last_week[1], by = "week")
 ```
 
+```{r dt_all}
+dt_all <- readRDS("../data_processed/log_all.RDS") 
+```
+
 ```{r dt}
 start_date <- week_starts[1]
 end_date <- last_week[7]
-dt <- readRDS("../data_processed/log_all.RDS") %>% 
+dt <- dt_all %>% 
   filter(between(date, start_date, end_date)) %>% 
   select(-week_data) %>% 
   mutate(week = floor_date(date, unit = "weeks", week_start = 1))
@@ -51,9 +55,37 @@ A summary of activities for `r length(week_starts)` weeks from `r start_date` to
 
 I did `r nrow(dt)` activities.
 
-```{r}
-count(dt, type) %>% 
-  my_kable()
+```{r week_means}
+dt %>% 
+  group_by(type) %>% 
+  summarise(n_total = n(), n = round(n() / 12, 2), across(c(time, distance, ascent), ~round(sum(.) / 12, 0))) %>% 
+  my_kable(caption = "Weekly averages for last 12 full weeks.")
+```
+
+# This Year
+
+```{r 23_weeks}
+n_weeks <- yday(end_date) / 7
+```
+
+```{r 23_all}
+dt_all %>% 
+  filter(year(date) == 2023) %>% 
+  group_by(type) %>% 
+  summarise(n = n(), across(c(time, distance, ascent), sum)) %>% 
+  mutate(n_wkly = round(n/n_weeks, 2), 
+         across(c(time, distance, ascent), ~round(./n_weeks, 0), .names = "{.col}_wkly")) %>% 
+  my_kable(caption = "Totals for this year so far.")
+```
+
+```{r 23_bike}
+dt_all %>% 
+  filter(type == "B", year(date) == 2023) %>% 
+  group_by(subtype) %>% 
+  summarise(n = n(), across(c(time, distance, ascent), sum)) %>% 
+  mutate(n_wkly = round(n/n_weeks, 2), 
+         across(c(time, distance, ascent), ~round(./n_weeks, 0), .names = "{.col}_wkly")) %>% 
+  my_kable(caption = "Totals by bike for this year so far.")
 ```
 
 # Hours by Week
@@ -135,7 +167,6 @@ Longest 2 activities in the last 6 weeks for each activity type.
 dt_most <- dt %>% 
   mutate(weeks_since = isoweek(end_date) - isoweek(date)) %>%
   filter(weeks_since <=5) %>% 
-  mutate(weeks_since = isoweek(end_date) - isoweek(date)) %>% 
   select(-week) %>% 
   group_by(weeks_since)
 ```
@@ -161,4 +192,14 @@ dt_most %>%
   my_kable(caption = "Longest runs")
 ```
 
+Longest activities in last 12 weeks:
+
+```{r long}
+dt %>% 
+  mutate(weeks_since = isoweek(end_date) - isoweek(date)) %>%
+  filter(weeks_since <=11) %>% 
+  select(-week) %>% 
+  slice_max(time, n = 10) %>% 
+  my_kable(caption = "10 longest activities in last 12 weeks")
+```
 

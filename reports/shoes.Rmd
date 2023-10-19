@@ -41,7 +41,7 @@ shoes %>%
   DT::datatable(caption = "Using DT package")  
 ```
 
-Just running:
+Total distance by year (reactable):
 
 ```{r owned2}
 shoes %>% 
@@ -50,7 +50,8 @@ shoes %>%
   summarise(dist = sum(distance)) %>% 
   arrange(desc(dist)) %>% 
   reactable(groupBy = "year", 
-            columns = list(dist = colDef(aggregate = "sum")))  
+            columns = list(dist = colDef(aggregate = "sum")),
+            defaultPageSize = 15)  
 #  scroll_box(width = "100%", height = "400px")
 ```
 
