@@ -31,3 +31,13 @@ if (save_flag){
   saveRDS(log_all, "data_processed/log_all.RDS")
 }
 
+log_full <- rename(log13, description = notes) %>%
+  bind_rows(log18, log20, log22) %>%
+  rename(name = description) %>%
+  replace_na(list(week_data = 0)) %>%
+  mutate(week_data = as.logical(week_data)) %>%
+  relocate(week_data, .after = last_col())
+
+if (save_flag){
+  saveRDS(log_full, "data_processed/log_full.RDS")
+}
