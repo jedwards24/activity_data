@@ -1,0 +1,82 @@
+---
+title: "All Years Summary"
+output: html_document
+---
+
+```{r setup, include = FALSE}
+knitr::opts_chunk$set(echo = FALSE, message = FALSE, error = FALSE, cache = FALSE)
+library(tidyverse)
+library(lubridate)
+library(edwards)
+library(knitr)
+library(kableExtra)
+#library(cowplot)
+source("../functions.R")
+theme_set(cowplot::theme_minimal_grid())
+pal <- scales::hue_pal()(3)
+```
+
+```{r log_all}
+log_all <- readRDS("../data_processed/log_all.RDS") 
+```
+
+# Volume by Year 
+
+```{r week_ave}
+week_ave <- log_all %>%
+  filter(type %in% c("R", "B", "F")) %>%
+  filter(year(date) > 2013) %>%
+  group_by(year = as.factor(year(date))) %>%
+  mutate(n_weeks = yday(max(date)) / 7) %>%
+  group_by(type, year) %>%
+  summarise(n_weeks = max(n_weeks),
+            distance = sum(distance) / n_weeks,
+            time = sum(time) / 60 / n_weeks,
+            ascent = sum(ascent) / n_weeks,
+            freq = n() / n_weeks)
+```
+
+```{r week_hours1}
+week_ave %>%
+  ggplot(aes(x = year, y = time, fill = type)) +
+  geom_col() +
+  labs(x = "Year", y = "Hours", title = "Average Weekly Hours (Stacked)")
+```
+
+```{r week_hours2}
+week_ave %>%
+  ggplot(aes(x = year, y = time, fill = type)) +
+  geom_col(position = "dodge") +
+  labs(x = "Year", y = "Hours", title = "Average Weekly Hours (Dodged)")
+```
+
+```{r week_ascent}
+week_ave %>%
+  ggplot(aes(x = year, y = ascent, fill = type)) +
+  geom_col() +
+  labs(x = "Year", y = "Ascent (m)", title = "Average Weekly Ascent")
+```
+
+```{r week_freq}
+week_ave %>%
+  ggplot(aes(x = year, y = freq, fill = type)) +
+  geom_col(position = "dodge") +
+  labs(x = "Year", y = "Frequency", title = "Average Weekly Frequency")
+```
+
+```{r dist_foot}
+week_ave %>%
+  filter(type != "B") %>%
+  ggplot(aes(x = year, y = distance, fill = type)) +
+  geom_col() +
+  labs(x = "Year", y = "Distance (km)", title = "Average Weekly Distance on Foot")
+```
+
+```{r dist_bike}
+week_ave %>%
+  filter(type == "B") %>%
+  ggplot(aes(x = year, y = distance)) +
+  geom_col(fill = pal[2]) +
+  labs(x = "Year", y = "Distance (km)", title = "Average Weekly Distance Cycling")
+```
+
