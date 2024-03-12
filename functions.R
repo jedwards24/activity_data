@@ -66,25 +66,10 @@ eddington <- function(data, activity_type, measure = "Distance", unit_adjust = 1
   list(eddington = edd, exceeds = n_exceeds)
 }
 
-################
-# Returns a tibble of the `n` activities of `activity_type` with the largest "measure"
+# Returns a tibble of the `n` activities of type `types` with the largest `measure`
 # (e.g. 5 runs/cycles with most ascent/distance/time).
-################
-mostest <- function(data, types, measure, min_year = -Inf, max_year = Inf, n = 15) {
-  if ("week_data" %in% names(data)){
-    data <- filter(data, week_data == 0) %>%
-      select(-week_data)
-  }
-  types <- parse_types(types)
-  data %>%
-    filter(year(date) >= min_year, year(date) <= max_year) %>%
-    filter(type %in% types) %>%
-    top_n(n = n, wt = get(measure)) %>%
-    arrange(desc(get(measure)))
-}
-
-# Using current tidyeval
-mostest2 <- function(data, types, measure, n = 15) {
+# `measure` is unquoted NSE.
+mostest <- function(data, measure, types = "rfb" , n = 15) {
   if ("week_data" %in% names(data)){
     data <- filter(data, week_data == 0) %>%
       select(-week_data)
@@ -92,19 +77,20 @@ mostest2 <- function(data, types, measure, n = 15) {
   types <- parse_types(types)
   data %>%
     filter(type %in% types) %>%
-    top_n(n = n, wt = .data[[measure]]) %>%
-    arrange(type, desc(.data[[measure]]))
+    slice_max({{measure}}, n = n) %>%
+    arrange(type, desc({{measure}}))
 }
 
 #################
 # Returns tibble, counts by year, of activities of `type` that have `measure` >= `threshold`.
 #################
-n_over <- function(data, activity_type, measure, threshold) {
+n_over <- function(data, measure, types = "frb", threshold) {
+  types <- parse_types(types)
   data %>%
-    filter(type == activity_type) %>%
+    filter(type %in% types) %>%
     filter(week_data == 0) %>%
     select(-week_data) %>%
-    filter(get(measure) >= threshold) %>%
+    filter({{measure}} >= threshold) %>%
     group_by(year = lubridate::year(date)) %>%
     count()
 }
@@ -460,6 +446,11 @@ tl_type <- function(dat, types = "frb", weekly = TRUE) {
     {if (weekly) mutate(., value = value * 7) else .} %>%
     pivot_wider(id_cols = c(type, metric), names_from = load_measure, values_from = value) %>%
     mutate(tsb = (ctl - atl) / ctl)
+}
+
+# Filter data to dates with year between `min_year` and `max_year` inclusive.
+filter_year <- function(data, min_year = -Inf, max_year = Inf) {
+  filter(data, between(year(date), min_year, max_year))
 }
 
 # Helper to more easily filter data between dates. The dates are given as strings "yyyy-mm-dd".
