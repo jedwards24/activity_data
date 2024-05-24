@@ -8,21 +8,13 @@ library(edwards)
 library(tsibble)
 library(slider)
 source("functions.R")
+theme_set(cowplot::theme_minimal_grid())
 
 log_all <- readRDS("data_processed/log_all.RDS")
 totals <- readRDS("data_processed/totals.RDS")
 parts <- readRDS("data_processed/bike_parts.RDS")
 
 count(log_all, week_data)
-# names(log_all) <- str_to_lower(names(log_all))
-
-#Other queries
-print(log_new, n=15)
-totals
-log_R
-names(log_R)
-names(log_new)
-log_new %>% group_by(type, week_data) %>% tally(distance)
 
 # 2020 month
 log_all %>%
@@ -37,7 +29,7 @@ log_all %>%
 #Annual volume
 volume <- log_all %>%
   filter(type %in% c("R", "B", "F")) %>%
-  filter(year(date) <= 2022, year(date) > 2013) %>%
+  filter(year(date) <= 2023, year(date) > 2013) %>%
   group_by(type, year = as.factor(year(date))) %>%
   summarise(distance = sum(distance),
             time = sum(time) / 60,
@@ -67,10 +59,12 @@ ggplot(volume, aes(x = year, y = freq, fill = type)) +
 ggplot(volume, aes(x = year, y = time / 52, fill = type)) +
   geom_col() +
   ylab("weekly hours")
+ggplot(volume, aes(x = year, y = ascent / 52, fill = type)) +
+  geom_col()
 
 # yearly Weekly volume ------------
 week_ave <- log_all %>%
-  filter(type %in% c("R", "B")) %>%
+  filter(type %in% c("R", "B", "F")) %>%
   filter(year(date) > 2013) %>%
   group_by(year = as.factor(year(date))) %>%
   mutate(n_weeks = yday(max(date)) / 7) %>%
@@ -79,16 +73,55 @@ week_ave <- log_all %>%
             distance = sum(distance) / n_weeks,
             time = sum(time) / 60 / n_weeks,
             ascent = sum(ascent) / n_weeks,
-            freq = n() / n_weeks)
+            freq = n() / n_weeks,
+            .groups = "drop")
+
+## Time
 week_ave %>%
   ggplot(aes(x = year, y = time, fill = type)) +
   geom_col(position = "dodge")
 week_ave %>%
+  ggplot(aes(x = year, y = time, fill = type)) +
+  geom_col()
+week_ave %>%
+  ggplot(aes(x = year, y = time, colour = type, group = type, shape = type)) +
+  geom_line() +
+  geom_point()
+
+## Distance
+week_ave %>%
   ggplot(aes(x = year, y = distance, fill = type)) +
   geom_col(position = "dodge")
 week_ave %>%
+  filter(type != "B") %>%
+  ggplot(aes(x = year, y = distance, fill = type)) +
+  geom_col()
+
+week_ave %>%
+  filter(type == "B") %>%
+  ggplot(aes(x = year, y = distance)) +
+  geom_col(fill = "#00BA38")
+scales::hue_pal()(3)
+week_ave %>%
   ggplot(aes(x = year, y = ascent, fill = type)) +
   geom_col(position = "dodge")
+week_ave %>%
+  ggplot(aes(x = year, y = ascent, fill = type)) +
+  geom_col()
+
+## Freq
+week_ave %>%
+  ggplot(aes(x = year, y = freq, fill = type)) +
+  geom_col(position = "dodge")
+week_ave %>%
+#  filter(type != "F") %>%
+  ggplot(aes(x = year, y = freq, fill = type)) +
+  geom_col()
+
+week_ave %>%
+  ggplot(aes(x = year, y = freq, colour = type, group = type, shape = type)) +
+  geom_line() +
+  geom_point()
 
 # bike volume ----------
 log_all %>%
@@ -111,8 +144,7 @@ log_all %>%
 log_all %>%
   filter(type == "B") %>%
   group_by(year = year(date)) %>%
-  summarise(n = n(), km = sum(distance)) %>%
-  prinf()
+  summarise(n = n(), km = sum(distance))
 
 log_all %>%
   filter(type == "B", subtype == "(none)")
@@ -217,31 +249,22 @@ log_all %>% filter(type == "R") %>%
   group_by(year = year(date), long = distance >=20) %>%
   count()
 
-mostest(log_all, "R", "time")
-mostest(log_all, "R", "distance")
-mostest(log_all, "R", "ascent")
+mostest(log_all, time, "r")
+mostest(log_all, distance, "r")
+mostest(log_all, ascent, "r")
+mostest(log_all, ascent, "b")
 
-mostest(log_all, "b", "ascent")
 log_all %>%
   filter(distance > 40) %>%
   mutate(ascent_km = ascent / distance) %>%
   mostest("b", "ascent_km")
 
-mostest(log_all, "fr", "time", 2022, 2023)
-mostest(log_all, "fr", "distance", 2022, 2023)
-mostest(log_all, "fr", "distance", 2022, 2023)
+n_over(log_all, distance, "b", 60)
 
-n_over(log_all, "B", "distance", 60)
-n_over(log_all, "B", "time", 90)
-n_over(log_all, "R", "ascent", 500)
-n_over(log_all, "B", "ascent", 500)
-
-# counts per year by threshold
-log_all
 # eddington
-eddington(log_new, "R")
-eddington(log_new, "R", years = c(2013, 2014))
-eddington(log_new, "R", years = 2017)
+eddington(log_all, "R")
+eddington(log_all, "R", years = c(2013, 2014))
+eddington(log_all, "R", years = 2024)
 eddington(log_all, "B", "ascent", 20)
 eddington(log_all, "B", "distance")
 eddington(totals, "R", years = 2017)
@@ -252,7 +275,7 @@ count(workouts, type)
 count(workouts, quality)
 
 # cdf over threshold
-dt %>%
+log_all %>%
   filter(type == "B") %>%
   count(distance) %>%
   arrange(desc(distance)) %>%
@@ -317,12 +340,12 @@ rides %>%
 dt22 <- readRDS("data_processed/log_2022.RDS")
 dt22 %>%
   filter(time > 120) %>%
-  mostest2("B", "ave_power")
+  mostest(ave_power, "B")
 
 # Strava-style training log ------------
 tl <- log_all %>%
   filter(type %in% c("R", "B", "F")) %>%
-  filter(year(date) == 2021) %>%
+  filter(year(date) == 2024) %>%
   mutate(weeks_ago = isoweek(today()) - isoweek(date),
          wday = wday(date, label = TRUE)) %>%
   filter(weeks_ago <= 4) %>%
@@ -511,7 +534,7 @@ fr %>%
   geom_point()
 fr %>%
   arrange(desc(pace))
-mostest2(fr, "R", "pace")
+mostest(fr, pace)
 fr %>%
   arrange(pace)
 fr2 <- fr %>%

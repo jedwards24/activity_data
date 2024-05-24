@@ -48,21 +48,22 @@ move_ave <- function(x,n=7){
 # By default all dates are included but a integer of vector "years" can be used to filter.
 # The number of activities above each integer is returned together with the Eddington number.
 ##################
-eddington <- function(data, activity_type, measure = "Distance", unit_adjust = 1, years = NA) {
+eddington <- function(data, activity_type, measure = "distance", unit_adjust = 1, years = NA) {
   if (!any(is.na(years))){
-    data <- filter(data, lubridate::year(Date) %in% years)
+    data <- filter(data, lubridate::year(date) %in% years)
   }
-  vals <- data %>% filter(type == activity_type) %>%
+  vals <- data %>%
+    filter(type == activity_type) %>%
     select_at(measure) %>%
     mutate_all(~./unit_adjust) %>%
     unlist(., use.names = F)
 
   nn <- floor(max(vals))
   n_exceeds <- integer(nn)
-  for (i in 1 : nn){
+  for (i in seq.int(nn)){
     n_exceeds[i] <- sum((vals) >= i)
   }
-  edd <- max(which(n_exceeds >= (1 : nn)))
+  edd <- max(which(n_exceeds >= (1:nn)))
   list(eddington = edd, exceeds = n_exceeds)
 }
 

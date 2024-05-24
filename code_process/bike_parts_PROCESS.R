@@ -8,9 +8,17 @@ source("functions.R")
 
 # Load data and basic checks -------------
 ev <- read_csv("data/bike_parts.csv", col_types = "ccccc") %>%
-  mutate(date = dmy(date)) %>%
+  mutate(date = ymd(date)) %>%
   mutate(id = row_number())
 new_events <- c("new", "replace", "front", "rear")
+
+# Write sorted version to csv
+if(save_flag){
+  ev %>%
+    select(-id) %>%
+    arrange(bike, date) %>%
+    write_csv("data/bike_parts.csv", na = "")
+}
 
 errs1 <- ev %>%
   filter(event %in% new_events, is.na(part)) %>%

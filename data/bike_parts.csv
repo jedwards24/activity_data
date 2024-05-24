@@ -1,73 +1,84 @@
 date,bike,category,event,part
-16/01/20,4iiii,battery,new,original
-30/07/2020,4iiii,battery,replace,A
-03/04/2021,4iiii,battery,replace,B
-22/10/2021,4iiii,battery,replace,C
-19/07/2022,4iiii,battery,replace,D
-29/06/23,4iiii,battery,replace,E
-29/11/17,cgr,bottom bracket,new,original
-29/11/17,cgr,brake pads front,new,original
-29/11/17,cgr,cassette,new,original
-29/11/17,cgr,chain,new,original
-29/11/17,cgr,freehub,new,original
-29/11/17,cgr,front gear cable,new,original
-29/11/17,cgr,handlebar tape,new,original
-29/11/17,cgr,headset,new,original
-29/11/17,cgr,jockeys,new,original
-29/11/17,cgr,mech hanger,new,original
-29/11/17,cgr,rear gear cable,new,original
-29/11/17,cgr,rear mudguard,new,original
-29/11/17,cgr,rear tube,new,original
-29/11/17,cgr,tyre,front,mplus A
-29/11/17,cgr,tyre,rear,mplus B
-25/10/2020,cgr,bottom bracket,replace,A
-22/10/2021,cgr,bottom bracket,clean,
-17/04/2022,cgr,bottom bracket,clean,
-17/04/2022,cgr,brake pads front,replace,A
-15/11/2020,cgr,cassette,clean,
-18/03/2021,cgr,cassette,clean,
-23/03/2019,cgr,chain,replace,Shim CN-4601
-18/03/2021,cgr,chain,replace,KMC X10
-15/11/2020,cgr,freehub,clean,
-25/03/2021,cgr,front gear cable,replace,Shim steel
-25/03/2021,cgr,handlebar tape,replace,Selle smootape
-15/11/2020,cgr,headset,clean,
-15/11/2020,cgr,jockeys,clean,
-18/03/2021,cgr,jockeys,clean,
-25/11/2020,cgr,mech hanger,replace,A
-11/12/2020,cgr,rear gear cable,replace,Shim steel
-15/11/2020,cgr,rear mudguard,clean,
-22/01/2021,cgr,rear tube,repair,
-22/01/2021,cgr,tyre,to rear,mplus A
-22/01/2021,cgr,tyre,to front,mplus B
-29/11/2019,cube,cassette,new,original
-29/11/2019,cube,chain,new,original
-29/11/2019,cube,jockeys,new,original
-29/11/2019,cube,rear gear cable,new,original
-29/11/2019,cube,rear tube,new,original
-29/11/2019,cube,front tube,new,original
-29/11/2019,cube,tyre,front,grandsport A
-29/11/2019,cube,tyre,rear,grandsport B
-17/09/2021,cube,cassette,clean,
-17/09/2021,cube,chain,replace,KMC X11
-13/09/22,cube,chain,replace,Shim CN-HG601
-17/09/2021,cube,jockeys,clean,
-20/07/23,cube,rear gear cable,replace,Shim steel
-17/09/2021,cube,rear tube,repair,
-09/10/22,cube,rear tube,replace,A
-17/09/2021,cube,tyre,to rear,grandsport A
-02/08/23,cube,tyre,retire,grandsport A
-17/09/2021,cube,tyre,retire,grandsport B
-17/09/2021,cube,tyre,front,rubino A
-02/08/23,cube,tyre,rear,rubino B
-01/01/05,scottmb,cassette,new,original
-01/01/05,scottmb,chain,new,original
-01/01/05,scottmb,jockeys,new,original
-28/05/23,scottmb,cassette,clean,
-28/05/23,scottmb,chain,replace,Shim CH-HG40
-28/05/23,scottmb,jockeys,clean,
-16/08/23,cube,jockeys,clean,
-16/08/23,cube,cassette,clean,
-16/08/23,cube,chain,repair link,
-16/08/23,cube,rear tube,repair,
-16/08/23,cube,chain,clean,
+2020-01-16,4iiii,battery,new,original
+2020-07-30,4iiii,battery,replace,A
+2021-04-03,4iiii,battery,replace,B
+2021-10-22,4iiii,battery,replace,C
+2022-07-19,4iiii,battery,replace,D
+2023-06-29,4iiii,battery,replace,E
+2024-04-22,4iiii,battery,replace,F
+2017-11-29,cgr,bottom bracket,new,original
+2017-11-29,cgr,brake pads front,new,original
+2017-11-29,cgr,cassette,new,original
+2017-11-29,cgr,chain,new,original
+2017-11-29,cgr,freehub,new,original
+2017-11-29,cgr,front gear cable,new,original
+2017-11-29,cgr,handlebar tape,new,original
+2017-11-29,cgr,headset,new,original
+2017-11-29,cgr,jockeys,new,original
+2017-11-29,cgr,mech hanger,new,original
+2017-11-29,cgr,rear gear cable,new,original
+2017-11-29,cgr,rear mudguard,new,original
+2017-11-29,cgr,rear tube,new,original
+2017-11-29,cgr,tyre,front,mplus A
+2017-11-29,cgr,tyre,rear,mplus B
+2017-11-29,cgr,front mech,new,original
+2019-03-23,cgr,chain,replace,Shim CN-4601
+2020-10-25,cgr,bottom bracket,replace,A
+2020-11-15,cgr,cassette,clean,
+2020-11-15,cgr,headset,clean,
+2020-11-15,cgr,jockeys,clean,
+2020-11-15,cgr,rear mudguard,clean,
+2020-11-15,cgr,freehub,clean,
+2020-11-25,cgr,mech hanger,replace,A
+2020-12-11,cgr,rear gear cable,replace,Shim steel
+2021-01-22,cgr,rear tube,repair,
+2021-01-22,cgr,tyre,to rear,mplus A
+2021-01-22,cgr,tyre,to front,mplus B
+2021-03-18,cgr,cassette,clean,
+2021-03-18,cgr,chain,replace,KMC X10 A
+2021-03-18,cgr,jockeys,clean,
+2021-03-25,cgr,front gear cable,replace,Shim steel
+2021-03-25,cgr,handlebar tape,replace,Selle smootape
+2021-10-22,cgr,bottom bracket,clean,
+2022-04-17,cgr,bottom bracket,clean,
+2022-04-17,cgr,brake pads front,replace,A
+2024-01-23,cgr,front mech,replace,Tiagra FD-4700
+2024-01-23,cgr,chain,repair link,
+2024-02-09,cgr,chain,replace,KMC X10 B
+2024-03-15,cgr,bottom bracket,clean,
+2019-11-29,cube,cassette,new,original
+2019-11-29,cube,chain,new,original
+2019-11-29,cube,jockeys,new,original
+2019-11-29,cube,rear gear cable,new,original
+2019-11-29,cube,rear tube,new,original
+2019-11-29,cube,front tube,new,original
+2019-11-29,cube,tyre,front,grandsport A
+2019-11-29,cube,tyre,rear,grandsport B
+2021-09-17,cube,cassette,clean,
+2021-09-17,cube,chain,replace,KMC X11
+2021-09-17,cube,jockeys,clean,
+2021-09-17,cube,rear tube,repair,
+2021-09-17,cube,tyre,to rear,grandsport A
+2021-09-17,cube,tyre,retire,grandsport B
+2021-09-17,cube,tyre,front,rubino A
+2022-09-13,cube,chain,replace,Shim CN-HG601 A
+2022-10-09,cube,rear tube,replace,A
+2023-07-20,cube,rear gear cable,replace,Shim steel
+2023-08-02,cube,tyre,retire,grandsport A
+2023-08-02,cube,tyre,rear,rubino B
+2023-08-16,cube,jockeys,clean,
+2023-08-16,cube,cassette,clean,
+2023-08-16,cube,chain,repair link,
+2023-08-16,cube,rear tube,repair,
+2023-08-16,cube,chain,clean,
+2024-04-29,cube,chain,replace,Shim CN-HG601 B
+2024-05-12,cube,cassette,clean,
+2005-01-01,scottmb,cassette,new,original
+2005-01-01,scottmb,chain,new,original
+2005-01-01,scottmb,jockeys,new,original
+2023-05-28,scottmb,cassette,clean,
+2023-05-28,scottmb,chain,replace,Shim CH-HG40
+2023-05-28,scottmb,jockeys,clean,
+2024-05-16,cgr,cassette,clean,
+2024-05-16,cgr,freehub,clean,
+2024-05-16,cgr,headset,clean,

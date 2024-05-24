@@ -1,6 +1,7 @@
 ---
 title: "Bike Parts"
 output: html_document
+date: "`r lubridate::today()`"
 ---
 
 ```{r setup, include = FALSE}

@@ -70,7 +70,7 @@ n_weeks <- yday(end_date) / 7
 
 ```{r 23_all}
 dt_all %>% 
-  filter(year(date) == 2023) %>% 
+  filter(year(date) == year(today())) %>% 
   group_by(type) %>% 
   summarise(n = n(), across(c(time, distance, ascent), sum)) %>% 
   mutate(n_wkly = round(n/n_weeks, 2), 
@@ -80,12 +80,31 @@ dt_all %>%
 
 ```{r 23_bike}
 dt_all %>% 
-  filter(type == "B", year(date) == 2023) %>% 
+  filter(type == "B", year(date) == year(today())) %>% 
   group_by(subtype) %>% 
   summarise(n = n(), across(c(time, distance, ascent), sum)) %>% 
   mutate(n_wkly = round(n/n_weeks, 2), 
          across(c(time, distance, ascent), ~round(./n_weeks, 0), .names = "{.col}_wkly")) %>% 
   my_kable(caption = "Totals by bike for this year so far.")
+```
+
+# Run and Bike Counts by Week
+
+```{r activity_counts}
+dtn <- dt %>% 
+  filter(type %in% c("B", "R")) %>% 
+  group_by(type, week) %>% 
+  summarise(n = n()) %>% 
+  arrange(week)
+
+dtn %>% 
+  ggplot(aes(week, n, group = type, fill = type)) +
+  geom_col() +
+  labs(x = "Week", y = "Activity Count")
+
+dtn %>% 
+  pivot_wider(id_cols = week, names_from = type, values_from = n, values_fill = 0) %>% 
+  my_kable(col.names = c("Week Commencing", "Bike", "Run"), align = "ccc")
 ```
 
 # Hours by Week
@@ -148,7 +167,7 @@ week_totals %>%
 
 # Training Load
 
-These show 2023 only, up to `r max(totals$date)`.
+These show 2023 onwards only, up to `r max(totals$date)`.
 
 
 ```{r tl1}
@@ -165,7 +184,7 @@ Longest 2 activities in the last 6 weeks for each activity type.
 
 ```{r dt_most}
 dt_most <- dt %>% 
-  mutate(weeks_since = isoweek(end_date) - isoweek(date)) %>%
+  mutate(weeks_since = (isoweek(end_date) - isoweek(date)) %% 52) %>%
   filter(weeks_since <=5) %>% 
   select(-week) %>% 
   group_by(weeks_since)
@@ -196,7 +215,7 @@ Longest activities in last 12 weeks:
 
 ```{r long}
 dt %>% 
-  mutate(weeks_since = isoweek(end_date) - isoweek(date)) %>%
+  mutate(weeks_since = (isoweek(end_date) - isoweek(date)) %% 52) %>%
   filter(weeks_since <=11) %>% 
   select(-week) %>% 
   slice_max(time, n = 10) %>% 
