@@ -6,6 +6,15 @@ source("functions.R")
 theme_set(cowplot::theme_minimal_grid())
 tot <- readRDS("data_processed/totals.RDS")
 
+
+# KJ of work with average power for hour
+watts_to_kj <- function(x) {
+  3600 * x / 1000
+}
+watts_to_kj(seq(100, 150, by = 10))
+100*3600/1000
+
+
 # CTL, ATL -----------
 
 # SES
@@ -190,3 +199,74 @@ dtp %>%
   filter(norm_power == cum_max_np) %>%
   select(type, np = norm_power, time, ascent, name = description) %>%
   prinf()
+
+# New AER measure--------------
+total_by_day2 <- function(log, start_date, end_date) {
+  check_dates(log, start_date, end_date)
+  log %>%
+    filter(type %in% c("B", "R", "F")) %>%
+    mutate(aer = aer_points(type, time, distance, ascent)) %>%
+    select(date, type, time, distance, ascent, aer) %>%
+    mutate(n = 1) %>%
+    group_by(date, type) %>%
+    summarise_all(sum) %>%
+    ungroup() %>%
+    arrange(date) %>%
+    complete(date = seq.Date(start_date, end_date, by = "days"),
+             type = c("B", "F", "R"),
+             fill = list(time = 0, distance = 0, ascent = 0, n = 0, aer = 0)) %>%
+    mutate(aer = pmin(aer, 1)) %>%
+    relocate(aer, .after = last_col()) %>%
+    mutate(hours = time / 60)
+}
+
+
+# Adjusts foot AER by average grade.
+# AER is between time / 240 (half bike) if grade is zero to
+# time / 120 when grade is `upper_grade`
+aer_points <- function(type, time, distance, ascent, upper_grade = 0.5) {
+  grade <- pmin(ascent / distance / 100, upper_grade) / upper_grade
+  case_when(
+    type == "R" ~ pmin(time / 60, 1),
+    type == "B" ~ pmin(time / 120, 1),
+    TRUE ~ pmin(time / 240 + grade * time / 240 , 1)
+  )
+}
+
+dt <- readRDS("data_processed/totals.RDS")
+summary(dt$aer)
+
+
+tail(dt)
+
+
+## Test
+log <- readRDS("data_processed/log_all.RDS")
+dt1 <- total_by_day(log, ymd("2013-07-01"), max(log$date))
+dt2 <- total_by_day2(log, ymd("2013-07-01"), max(log$date))
+dt3 <- total_by_day2(log, ymd("2013-07-01"), max(log$date))
+
+identical(dt1, dt2)
+tail(dt2)
+tail(dt1)
+dt1
+dt2
+waldo::compare(dt1, dt2)
+all.equal(dt1, dt2)
+tail(dt3)
+
+log2 <- log %>%
+  filter(type %in% c("F")) %>%
+  mutate(grade = ascent / distance / 100) %>%
+  filter(!week_data)
+
+log2 %>%
+  ggplot(aes(grade)) +
+  geom_histogram()
+
+dt1 %>%
+  mutate(aer_new = dt3$aer) %>%
+  filter(type %in% c("F")) %>%
+  ggplot(aes(aer, aer_new)) +
+  geom_point() +
+  geom_abline(slope = 1, intercept = 0, col = 2)

@@ -131,7 +131,8 @@ total_by_day <- function(log, start_date, end_date) {
   check_dates(log, start_date, end_date)
   log %>%
     filter(type %in% c("B", "R", "F")) %>%
-    select(date, type, time, distance, ascent) %>%
+    mutate(aer = aer_points(type, time, distance, ascent)) %>%
+    select(date, type, time, distance, ascent, aer) %>%
     mutate(n = 1) %>%
     group_by(date, type) %>%
     summarise_all(sum) %>%
@@ -139,13 +140,28 @@ total_by_day <- function(log, start_date, end_date) {
     arrange(date) %>%
     complete(date = seq.Date(start_date, end_date, by = "days"),
              type = c("B", "F", "R"),
-             fill = list(time = 0, distance = 0, ascent = 0, n = 0)) %>%
-    mutate(aer = ifelse(
-      type == "R",
-      pmin(time / 60, 1),
-      pmin(time / 120, 1)
-    )) %>%
+             fill = list(time = 0, distance = 0, ascent = 0, n = 0, aer = 0)) %>%
+    mutate(aer = pmin(aer, 1)) %>%
+    relocate(aer, .after = last_col()) %>%
     mutate(hours = time / 60)
+}
+
+# Calculate "aerobic points" of activities.
+# All inputs except `upper_grade` are vectors and a numeric vector is returned.
+# All values are capped at most 1. The calculation depends on activity type:
+# R is time / 60
+# B is time / 120.
+# F is time / 240 for a flat walk up to time / 120 for average grade >= `upper_grade`
+# with a linear increase as grade increases.
+# Any other activities have NA value.
+aer_points <- function(type, time, distance, ascent, upper_grade = 0.7) {
+  grade <- pmin(ascent / distance / 100, upper_grade) / upper_grade
+  case_when(
+    type == "R" ~ pmin(time / 60, 1),
+    type == "B" ~ pmin(time / 120, 1),
+    type == "F" ~ pmin(time / 240 + grade * time / 240 , 1),
+    TRUE ~ NA
+  )
 }
 
 # Checks if all dates in `data$date` are between `start_date` and `end_date` (inclusive).
