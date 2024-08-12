@@ -141,7 +141,7 @@ total_by_day <- function(log, start_date, end_date) {
     complete(date = seq.Date(start_date, end_date, by = "days"),
              type = c("B", "F", "R"),
              fill = list(time = 0, distance = 0, ascent = 0, n = 0, aer = 0)) %>%
-    mutate(aer = pmin(aer, 1)) %>%
+#    mutate(aer = pmin(aer, 1)) %>%
     relocate(aer, .after = last_col()) %>%
     mutate(hours = time / 60)
 }

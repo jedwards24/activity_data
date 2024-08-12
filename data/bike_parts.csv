@@ -6,6 +6,7 @@ date,bike,category,event,part
 2022-07-19,4iiii,battery,replace,D
 2023-06-29,4iiii,battery,replace,E
 2024-04-22,4iiii,battery,replace,F
+2024-06-04,4iiii,battery,replace,G
 2017-11-29,cgr,bottom bracket,new,original
 2017-11-29,cgr,brake pads front,new,original
 2017-11-29,cgr,cassette,new,original
@@ -46,14 +47,21 @@ date,bike,category,event,part
 2024-01-23,cgr,chain,repair link,
 2024-02-09,cgr,chain,replace,KMC X10 B
 2024-03-15,cgr,bottom bracket,clean,
+2024-05-16,cgr,cassette,clean,
+2024-05-16,cgr,freehub,clean,
+2024-05-16,cgr,headset,clean,
+2024-05-27,cgr,rear gear cable,replace,Shim steel B
 2019-11-29,cube,cassette,new,original
 2019-11-29,cube,chain,new,original
 2019-11-29,cube,jockeys,new,original
 2019-11-29,cube,rear gear cable,new,original
+2019-11-29,cube,front gear cable,new,original
 2019-11-29,cube,rear tube,new,original
 2019-11-29,cube,front tube,new,original
 2019-11-29,cube,tyre,front,grandsport A
 2019-11-29,cube,tyre,rear,grandsport B
+2019-11-29,cube,headset,new,original
+2019-11-29,cube,handlebar,new,original
 2021-09-17,cube,cassette,clean,
 2021-09-17,cube,chain,replace,KMC X11
 2021-09-17,cube,jockeys,clean,
@@ -73,12 +81,12 @@ date,bike,category,event,part
 2023-08-16,cube,chain,clean,
 2024-04-29,cube,chain,replace,Shim CN-HG601 B
 2024-05-12,cube,cassette,clean,
+2024-05-27,cube,front gear cable,replace,Shim steel set
+2024-05-27,cube,headset,clean,
+2024-05-27,cube,handlebar,replace,cube zero 42mm
 2005-01-01,scottmb,cassette,new,original
 2005-01-01,scottmb,chain,new,original
 2005-01-01,scottmb,jockeys,new,original
 2023-05-28,scottmb,cassette,clean,
 2023-05-28,scottmb,chain,replace,Shim CH-HG40
 2023-05-28,scottmb,jockeys,clean,
-2024-05-16,cgr,cassette,clean,
-2024-05-16,cgr,freehub,clean,
-2024-05-16,cgr,headset,clean,

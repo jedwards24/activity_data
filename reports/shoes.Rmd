@@ -55,11 +55,27 @@ shoes %>%
 #  scroll_box(width = "100%", height = "400px")
 ```
 
-Just 2021: 
 
-```{r run_2021}
+Just 2024: 
+
+```{r run_2024}
 shoes %>% 
-  filter(year == 2021) %>% 
+  filter(year == 2024) %>% 
+  filter(owned) %>% 
+  group_by(id, name) %>% 
+  summarise(dist_run = sum(distance * (type %in% "R")),
+            dist_walk = sum(distance * (type %in% "F")),
+            dist_all = sum(distance * (type %in% c("F", "R")))) %>% 
+  arrange(desc(dist_all)) %>% 
+  my_kable() %>% 
+  scroll_box(width = "100%", height = "400px")
+```  
+
+Just 2023: 
+
+```{r run_2023}
+shoes %>% 
+  filter(year == 2023) %>% 
   filter(owned) %>% 
   group_by(id, name) %>% 
   summarise(dist_run = sum(distance * (type %in% "R")),
@@ -85,11 +101,11 @@ shoes %>%
   scroll_box(width = "100%", height = "400px")
 ```  
 
-Just 2023: 
+Just 2021: 
 
-```{r run_2023}
+```{r run_2021}
 shoes %>% 
-  filter(year == 2023) %>% 
+  filter(year == 2021) %>% 
   filter(owned) %>% 
   group_by(id, name) %>% 
   summarise(dist_run = sum(distance * (type %in% "R")),
