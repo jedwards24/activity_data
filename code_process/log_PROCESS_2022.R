@@ -14,13 +14,19 @@ new_names <-  c("date", "type", "subtype", "time", "distance", "ascent", "ave_po
                 "quality_types", "time_on", "notes")
 
 log_master <- read_sheet("1w9vNdPAB3qxqnqbToHmGBjxSSAN0-ckYuK_96oluSG8",
-                 col_types = "Dccnnnnncnnnnnnnnncnc")
+                 col_types = "Dccnnnnncnnnnnnnnncnc") %>%
+  filter(!is.na(Type)) %>%
+  setNames(new_names)
 
-log_2022 <- filter(log_master, !is.na(Type)) %>%
-  setNames(new_names) %>%
-  log_replace_nas()
+errs <- count_nas(log_master, TRUE)[c("feel", "enjoy", "feel_after")] %>%
+  .[.>0]
+if (length(errs) > 0){
+  stop("All `feel`, `enjoy`, `feel_after` columns must be non-missing\n",
+       "There are missing values in the following columns:\n", names(errs))
+}
 
 # Have left NAs in Description,  Quality_types, Notes
+log_2022 <- log_replace_nas(log_master)
 
 if(save_flag){
   saveRDS(log_master, "data_processed/log_2022_raw.RDS")

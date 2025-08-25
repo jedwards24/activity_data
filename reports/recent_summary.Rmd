@@ -20,7 +20,8 @@ week_starts <- seq(last_week[1] - 77, last_week[1], by = "week")
 ```
 
 ```{r dt_all}
-dt_all <- readRDS("../data_processed/log_all.RDS") 
+dt_all <- readRDS("../data_processed/log_all.RDS") %>% 
+  filter(type %in% c("R", "B", "F"))
 ```
 
 ```{r dt}

@@ -17,5 +17,6 @@ Runtime tests:
 [x] Missing values (except part)
 [x] Each category/part should have one of new/replace/front/rear
 - more?
-
+[] Check for unexpected missing values in log_PROCESS? (activities other than G with missing dist etc.)
+[] Catch NA warning message in log_PROCESS?
 

@@ -7,6 +7,8 @@ date,bike,category,event,part
 2023-06-29,4iiii,battery,replace,E
 2024-04-22,4iiii,battery,replace,F
 2024-06-04,4iiii,battery,replace,G
+2024-11-05,4iiii,battery,replace,Morrisons
+2025-08-25,4iiii,battery,replace,GP1
 2017-11-29,cgr,bottom bracket,new,original
 2017-11-29,cgr,brake pads front,new,original
 2017-11-29,cgr,cassette,new,original
@@ -51,6 +53,10 @@ date,bike,category,event,part
 2024-05-16,cgr,freehub,clean,
 2024-05-16,cgr,headset,clean,
 2024-05-27,cgr,rear gear cable,replace,Shim steel B
+2024-11-18,cgr,tyre,front,Vitoria Zaffiro Pro A
+2024-11-18,cgr,tyre,rear,Vitoria Zaffiro Pro B
+2024-11-18,cgr,rear tube,replace,Michelin Airstop
+2025-03-08,cgr,bottom bracket,clean,
 2019-11-29,cube,cassette,new,original
 2019-11-29,cube,chain,new,original
 2019-11-29,cube,jockeys,new,original
