@@ -11,6 +11,7 @@ library(knitr)
 library(kableExtra)
 library(reactable)
 options(dplyr.summarise.inform = FALSE)
+current_year <- year(today())
 ```
 
 ```{r shoes}
@@ -47,20 +48,22 @@ Total distance by year (reactable):
 shoes %>% 
   filter(owned) %>% 
   group_by(id, name, year) %>% 
-  summarise(dist = sum(distance)) %>% 
-  arrange(desc(dist)) %>% 
+  summarise(dist_run = sum(distance * (type %in% "R")),
+            dist_walk = sum(distance * (type %in% "F")),
+            dist_all = sum(distance * (type %in% c("F", "R")))) %>% 
+  arrange(desc(dist_all)) %>% 
   reactable(groupBy = "year", 
-            columns = list(dist = colDef(aggregate = "sum")),
+            columns = list(dist_all = colDef(aggregate = "sum")),
             defaultPageSize = 15)  
 #  scroll_box(width = "100%", height = "400px")
 ```
 
 
-Just 2024: 
+Just `r current_year`: 
 
-```{r run_2024}
+```{r run_this_year}
 shoes %>% 
-  filter(year == 2024) %>% 
+  filter(year == current_year) %>% 
   filter(owned) %>% 
   group_by(id, name) %>% 
   summarise(dist_run = sum(distance * (type %in% "R")),
@@ -71,11 +74,11 @@ shoes %>%
   scroll_box(width = "100%", height = "400px")
 ```  
 
-Just 2023: 
+Just `r current_year - 1`: 
 
-```{r run_2023}
+```{r run_last_year}
 shoes %>% 
-  filter(year == 2023) %>% 
+  filter(year == current_year - 1) %>% 
   filter(owned) %>% 
   group_by(id, name) %>% 
   summarise(dist_run = sum(distance * (type %in% "R")),
@@ -86,32 +89,3 @@ shoes %>%
   scroll_box(width = "100%", height = "400px")
 ```  
 
-Just 2022: 
-
-```{r run_2022}
-shoes %>% 
-  filter(year == 2022) %>% 
-  filter(owned) %>% 
-  group_by(id, name) %>% 
-  summarise(dist_run = sum(distance * (type %in% "R")),
-            dist_walk = sum(distance * (type %in% "F")),
-            dist_all = sum(distance * (type %in% c("F", "R")))) %>% 
-  arrange(desc(dist_all)) %>% 
-  my_kable() %>% 
-  scroll_box(width = "100%", height = "400px")
-```  
-
-Just 2021: 
-
-```{r run_2021}
-shoes %>% 
-  filter(year == 2021) %>% 
-  filter(owned) %>% 
-  group_by(id, name) %>% 
-  summarise(dist_run = sum(distance * (type %in% "R")),
-            dist_walk = sum(distance * (type %in% "F")),
-            dist_all = sum(distance * (type %in% c("F", "R")))) %>% 
-  arrange(desc(dist_all)) %>% 
-  my_kable() %>% 
-  scroll_box(width = "100%", height = "400px")
-```  

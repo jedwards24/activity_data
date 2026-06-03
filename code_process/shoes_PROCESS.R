@@ -16,7 +16,6 @@ df13 <- shoe13 %>%
          time = NA_real_,
          ascent = NA_real_)
 
-
 shoes <- log_all %>%
   mutate(year = year(date)) %>%
   filter(year >= 2014) %>%

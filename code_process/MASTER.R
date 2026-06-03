@@ -10,16 +10,15 @@ library(edwards)
 library(lubridate)
 source("functions.R")
 
-data_path <- "C:/Users/James/Dropbox/Mine/Personal"
-data_path <- "data"
+data_path <- "C:/Users/James/Dropbox/rrr_data/activity_data/data"
 
 process_folder <- "code_process"
 save_flag <- TRUE
 
 if (FALSE){
   source(file.path(process_folder, "log_PROCESS_2013.R"))
-  log_process("2018")
-  log_process("2020")
+  log_process("2018", data_path = data_path)
+  log_process("2020", data_path = data_path)
 }
 log_process("2022")
 source(file.path(process_folder, "log_MERGE.R"))
